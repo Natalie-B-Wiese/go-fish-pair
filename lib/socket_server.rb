@@ -23,4 +23,8 @@ class SocketServer
   rescue IO::WaitReadable, Errno::EINTR
     puts 'No client to accept'
   end
+
+  def ready?
+    controller.ready?
+  end
 end

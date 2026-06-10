@@ -1,7 +1,7 @@
 class MockSocketClient
   attr_reader :socket, :output
 
-  def initialize(port)
+  def initialize(port = 3336)
     @socket = TCPSocket.new('localhost', port)
   end
 
