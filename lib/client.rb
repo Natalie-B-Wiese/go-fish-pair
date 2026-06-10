@@ -21,6 +21,5 @@ class Client
 
   def ask_socket(message)
     puts_socket(message + INPUT_SYMBOL)
-    read_socket
   end
 end

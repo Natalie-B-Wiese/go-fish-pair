@@ -32,25 +32,33 @@ class Controller
   private
 
   def check_desired_player_count!
+    # Goal: set check_desired_player_count and send message
+    # Check if input
+    # Check if input is valid
+    #
+    # Send message
+
     return desired_player_count unless desired_player_count.nil?
 
-    input = ''
-    input = host.ask_socket('Enter number of players') unless messages[:host]
+    host.ask_socket('Enter number of players') unless messages[:host]
     messages[:host] = true
 
+    input = host.read_socket
     return if input.empty?
 
-    input = input.chomp.to_i
+    validate_player_count(input.chomp.to_i)
+  end
 
-    if valid_player_count?(input)
-      self.desired_player_count = input
+  def validate_player_count(number)
+    if valid_player_count?(number)
+      self.desired_player_count = number
     else
       host.puts_socket('Invalid input!')
       messages.delete(:host)
     end
   end
 
-  def valid_player_count?(input)
-    input.positive?
+  def valid_player_count?(number)
+    number.positive?
   end
 end
