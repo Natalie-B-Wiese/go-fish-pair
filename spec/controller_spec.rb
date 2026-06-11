@@ -5,6 +5,7 @@ require_relative '../lib/client'
 
 describe SocketServer do
   let!(:server) { SocketServer.new }
+  let(:prompt_regex) { /(\s*\S*)*#{Client::INPUT_SYMBOL}/ }
 
   before(:each) do
     server.start
@@ -21,6 +22,10 @@ describe SocketServer do
     client
   end
 
+  def question_regex(regex)
+    Regexp.new(regex.source + prompt_regex.source)
+  end
+
   describe '#accept_new_client' do
     context 'with multiple clients' do
       it 'shows welcome message to all clients' do
@@ -33,47 +38,90 @@ describe SocketServer do
   end
 
   describe '#ready?' do
-    context 'on host' do
-      let!(:client1) { create_and_accept_new_client }
-      let!(:controller) { server.controller }
-      let(:num_players_prompt_regex) { /player(\s*\S*)*#{Client::INPUT_SYMBOL}/i }
+    let!(:client1) { create_and_accept_new_client }
+    let!(:controller) { server.controller }
 
+    context 'on host' do
       it 'asks for number of players' do
         controller.ready?
-        expect(client1.capture_output).to match(num_players_prompt_regex)
+        expect(client1.capture_output).to match(question_regex(/player/))
       end
 
       it 'asks only once' do
         controller.ready?
         client1.capture_output
         controller.ready?
-        expect(client1.capture_output).to_not match(num_players_prompt_regex)
+        expect(client1.capture_output).to_not match(question_regex(/player/))
+      end
+    end
+
+    context 'after player count is entered' do
+      let(:valid_player_count_input) { '2' }
+      let!(:client2) { create_and_accept_new_client }
+
+      before do
+        client1.provide_input(valid_player_count_input)
+        controller.ready?
       end
 
-      context 'player count is entered but not met' do
+      it 'asks all players for name' do
+        expect(client1.capture_output).to match(question_regex(/name/))
+        expect(client2.capture_output).to match(question_regex(/name/))
+      end
+
+      it 'asks each player name only once' do
+        client1.capture_output
+        client2.capture_output
+
+        controller.ready?
+
+        expect(client1.capture_output).to_not match(question_regex(/name/))
+        expect(client2.capture_output).to_not match(question_regex(/name/))
+      end
+    end
+
+    context 'player count is not entered' do
+      it 'is not ready' do
+        expect(controller).not_to be_ready
+      end
+    end
+
+    context 'player count is entered' do
+      before do
+        client1.provide_input('2')
+        controller.ready?
+      end
+
+      context 'when player count is NOT met' do
         it 'is not ready' do
-          client1.provide_input('2')
           expect(controller).to_not be_ready
-          # controller.ready?
-          # expect(client1.capture_output).to_not match(/game is starting/i)
         end
       end
 
-      context 'player count is met' do
-        it 'is ready' do
-          create_and_accept_new_client
-          client1.provide_input('2')
-          expect(controller).to be_ready
-          # controller.try_run
-          # expect(client1.capture_output).to match(/game is starting/i)
-        end
-      end
+      context 'when player count is met' do
+        let!(:client2) { create_and_accept_new_client }
 
-      context 'player count is NOT met' do
-        it 'is not ready' do
-          expect(controller).to_not be_ready
-          # controller.try_run
-          # expect(client1.capture_output).to_not match(/game is starting/i)
+        context 'players do not have names' do
+          it 'is not ready' do
+            expect(controller).to_not be_ready
+          end
+        end
+
+        context 'one player has a name' do
+          it 'is not ready' do
+            client1.provide_input('Jeff')
+
+            expect(controller).to_not be_ready
+          end
+        end
+
+        context 'all players have a name' do
+          it 'is ready' do
+            client1.provide_input('Jeff')
+            client2.provide_input('Bob')
+
+            expect(controller).to be_ready
+          end
         end
       end
     end

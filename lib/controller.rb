@@ -2,13 +2,15 @@ require_relative 'game'
 
 # manages a single Go Fish game and all humans joined on that game
 class Controller
-  attr_reader :clients, :messages
+  attr_reader :clients, :messages, :names_asked, :player_names
 
   attr_accessor :desired_player_count, :game
 
   def initialize
     @clients = []
     @messages = {}
+    @names_asked = []
+    @player_names = []
     @desired_player_count = nil
     @game = nil
   end
@@ -32,7 +34,10 @@ class Controller
 
   def ready?
     collect_player_count
-    desired_player_count && num_players == desired_player_count
+    return false unless desired_player_count
+
+    collect_player_names
+    all_players_named?
   end
 
   def start_game
@@ -77,5 +82,44 @@ class Controller
 
   def valid_player_count?(number)
     number.positive?
+  end
+
+  def collect_player_names
+    clients.each_with_index do |client, index|
+      collect_client_name(client, index)
+    end
+  end
+
+  def collect_client_name(client, index)
+    client.ask_socket('Enter name') unless names_asked[index]
+    names_asked[index] = true
+
+    input = client.read_socket
+    return if input.empty?
+
+    validate_player_name(input.chomp, client, index)
+  end
+
+  def validate_player_name(name, client, client_index)
+    if valid_player_name?(name)
+      player_names[client_index] = name
+    else
+      client.puts_socket('Invalid name!')
+      names_asked[client_index] = nil
+    end
+  end
+
+  def valid_player_name?(name)
+    !name.empty?
+  end
+
+  def all_players_named?
+    return false if player_names.length != num_players
+
+    player_names.each do |name|
+      return false unless name
+    end
+
+    true
   end
 end
