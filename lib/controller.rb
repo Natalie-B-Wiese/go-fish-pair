@@ -1,13 +1,16 @@
 require_relative 'game'
+require_relative 'player'
 
 # manages a single Go Fish game and all humans joined on that game
 class Controller
-  attr_reader :clients, :messages, :names_asked, :player_names
+  attr_reader :clients, :players, :messages, :names_asked, :player_names
 
   attr_accessor :desired_player_count, :game
 
   def initialize
     @clients = []
+    @players = []
+
     @messages = {}
     @names_asked = []
     @player_names = []
@@ -41,7 +44,8 @@ class Controller
   end
 
   def start_game
-    self.game = Game.new
+    create_players
+    self.game = Game.new(players)
     @clients.each { |client| client.puts_socket('Game is starting...') }
   end
 
@@ -52,6 +56,12 @@ class Controller
   end
 
   private
+
+  def create_players
+    player_names.each do |name|
+      players.push(Player.new(name))
+    end
+  end
 
   def collect_player_count
     # Goal: set desired_player_count and send message

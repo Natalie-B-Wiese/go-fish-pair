@@ -119,19 +119,29 @@ describe SocketServer do
     let!(:client2) { create_and_accept_new_client }
     let!(:controller) { server.controller }
 
-    context 'before controller is started' do
-      it 'starts controller' do
+    context 'before controller is ready' do
+    end
+
+    context 'controller is ready' do
+      before do
+        client1.provide_input('2')
         server.run_game_if_possible
+
+        client1.provide_input('Jeff')
+        client2.provide_input('Bob')
+        server.run_game_if_possible
+      end
+
+      it 'starts controller' do
         expect(controller).to be_started
       end
 
-      it 'starts game' do
-        expect(controller.player[0].cards.length).to eq Player::SMALL_GAME_CARDS
-        expect(controller.player[1].cards.length).to eq Player::SMALL_GAME_CARDS
+      it 'creates a game' do
+        expect(controller.game).not_to be_nil
       end
     end
 
-    context 'after controller is started' do
+    context 'controller is started' do
       before do
         server.run_game_if_possible
         client1.capture_output
@@ -168,12 +178,12 @@ describe SocketServer do
         context 'after valid player' do
           before do
             valid_player_id = '2'
-            client1.provide_input(valid_player)
+            client1.provide_input(valid_player_id)
             server.run_game_if_possible
           end
 
           it 'makes a move' do
-            expect(controller.player[0].cards.length).not_to eq Player::SMALL_GAME_CARDS
+            expect(controller.player[0].cards.length).not_to eq Game::SMALL_GAME_CARDS
           end
 
           it 'shows result to all players' do
