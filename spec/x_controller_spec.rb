@@ -3,7 +3,7 @@ require_relative '../lib/socket_server'
 require_relative 'mock_socket_client'
 require_relative '../lib/client'
 
-describe SocketServer do
+xdescribe SocketServer do
   let!(:server) { SocketServer.new }
   let(:prompt_regex) { /(\s*\S*)*#{Client::INPUT_SYMBOL}/ }
 

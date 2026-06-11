@@ -21,8 +21,8 @@ describe SocketServer do
     client
   end
 
-  def first_card_of_player(player_id)
-    server.controller.players[player_id].cards.first
+  def question_regex(regex)
+    Regexp.new(regex.source + /(\s*\S*)*#{Client::INPUT_SYMBOL}/.source)
   end
 
   it 'is not listening on a port before it is started' do
@@ -30,167 +30,62 @@ describe SocketServer do
     expect { MockSocketClient.new }.to raise_error(Errno::ECONNREFUSED)
   end
 
-  xdescribe '#accept_new_client' do
-    context 'with one client' do
-      it 'adds client to array' do
-        create_and_accept_new_client
-        expect(server.controller.num_players).to eq 1
-      end
-
-      it 'shows welcome message' do
-        client1 = create_and_accept_new_client
-        expect(client1.capture_output).to match(/welcome/i)
-      end
-    end
-
-    context 'with multiple clients' do
-      it 'adds client to array' do
-        create_and_accept_new_client
-        create_and_accept_new_client
-        expect(server.controller.num_players).to eq 2
-      end
-
-      it 'shows welcome message to all clients' do
-        client1 = create_and_accept_new_client
-        client2 = create_and_accept_new_client
-        expect(client1.capture_output).to match(/welcome/i)
-        expect(client2.capture_output).to match(/welcome/i)
-      end
-    end
-  end
-
-  xdescribe '#ready?' do
-    context 'on host' do
-      it 'asks for number of players' do
-        client1 = create_and_accept_new_client
-        client1.capture_output
-
-        server.ready?
-        expect(client1.capture_output).to match(/player(\s*\S*)*#{Client::INPUT_SYMBOL}/i)
-      end
-
-      it 'asks only once' do
-        client1 = create_and_accept_new_client
-        client1.capture_output
-
-        server.ready?
-        client1.capture_output
-        server.ready?
-        expect(client1.capture_output).to be_empty
-      end
-
-      context 'when valid player count is met' do
-        it 'starts a game' do
-          server.ready?
-          expect(client1.capture_output).to eq(/game starting/i)
-        end
-      end
-
-      xcontext 'when invalid player count' do
-        let(:invalid_player_count) { 'Banana' }
-
-        it 'shows invalid message' do
-          client1 = create_and_accept_new_client
-          server.ready?
-          client1.capture_output
-          client1.provide_input(invalid_player_count)
-
-          server.ready?
-
-          expect(client1.capture_output).to match(/invalid/i)
-        end
-
-        it 'asks again for input' do
-          client1 = create_and_accept_new_client
-          server.ready?
-          client1.capture_output
-
-          client1.provide_input(invalid_player_count)
-
-          server.ready?
-          expect(client1.capture_output).to match(/player(\s*\S*)*#{Client::INPUT_SYMBOL}/i)
-        end
-      end
-    end
-  end
-
-  describe '#run_game_if_possible' do
+  describe '#accept_new_client' do
     let!(:client1) { create_and_accept_new_client }
-    let!(:client2) { create_and_accept_new_client }
-    let!(:controller) { server.controller }
-
-    context 'before controller is ready' do
+    it 'adds client to pending clients array' do
+      expect(server.pending_clients.length).to eq 1
     end
 
-    context 'controller is ready' do
+    it 'shows welcome message to client' do
+      expect(client1.capture_output).to match(/welcome/i)
+    end
+  end
+
+  describe '#handle_pending_clients' do
+    let!(:client1) { create_and_accept_new_client }
+
+    it 'asks the client for a name' do
+      server.handle_pending_clients
+      expect(client1.capture_output).to match(question_regex(/name/))
+    end
+
+    it 'asks only once' do
+      server.handle_pending_clients
+      client1.capture_output
+
+      expect(client1.capture_output).to_not match(question_regex(/name/))
+    end
+
+    context 'empty name provided' do
       before do
-        client1.provide_input('2')
-        server.run_game_if_possible
-
-        client1.provide_input('Jeff')
-        client2.provide_input('Bob')
-        server.run_game_if_possible
+        invalid_input = ''
+        client1.provide_input(invalid_input)
+        server.handle_pending_clients
       end
 
-      it 'starts controller' do
-        expect(controller).to be_started
+      it 'shows an error' do
+        expect(client1.capture_output).to match(/invalid/i)
       end
 
-      it 'creates a game' do
-        expect(controller.game).not_to be_nil
+      it 'asks again for name on next run' do
+        server.handle_pending_clients
+        expect(client1.capture_output).to match(question_regex(/name/))
       end
     end
 
-    context 'controller is started' do
+    context 'valid name provided' do
       before do
-        server.run_game_if_possible
-        client1.capture_output
-        client2.capture_output
+        valid_input = 'Natalie'
+        client1.provide_input(valid_input)
+        server.handle_pending_clients
       end
 
-      it 'shows all players their cards' do
-        server.run_game_if_possible
-
-        expect(client1.capture_output).to match(/cards/i)
-        expect(client2.capture_output).to match(/cards/i)
+      it 'removes client from pending client' do
+        expect(server.pending_clients.length).to eq 0
       end
 
-      it 'prompts current player for rank' do
-        server.run_game_if_possible
-        expect(client1.capture_output).to match(/rank/i)
-      end
-
-      context 'after valid rank' do
-        before do
-          valid_rank = first_card_of_player(0).rank
-          client1.provide_input(valid_rank)
-          server.run_game_if_possible
-        end
-
-        it 'shows list of players' do
-          expect(client1.capture_output).to match(/players/i)
-        end
-
-        it 'prompts for player' do
-          expect(client1.capture_output).to match(/select player/i)
-        end
-
-        context 'after valid player' do
-          before do
-            valid_player_id = '2'
-            client1.provide_input(valid_player_id)
-            server.run_game_if_possible
-          end
-
-          it 'makes a move' do
-            expect(controller.player[0].cards.length).not_to eq Game::SMALL_GAME_CARDS
-          end
-
-          it 'shows result to all players' do
-            expect(controller.player[0].capture_output).to match(/requested/i)
-            expect(controller.player[1].capture_output).to match(/requested/i)
-          end
-        end
+      it 'creates a pending user' do
+        expect(server.pending_users.length).to eq 1
       end
     end
   end
