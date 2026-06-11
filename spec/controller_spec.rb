@@ -36,41 +36,65 @@ describe SocketServer do
     context 'on host' do
       let!(:client1) { create_and_accept_new_client }
       let!(:controller) { server.controller }
+      let(:num_players_prompt_regex) { /player(\s*\S*)*#{Client::INPUT_SYMBOL}/i }
+
       it 'asks for number of players' do
-        server.ready?
-        expect(client1.capture_output).to match(/player(\s*\S*)*#{Client::INPUT_SYMBOL}/i)
+        controller.ready?
+        expect(client1.capture_output).to match(num_players_prompt_regex)
       end
 
       it 'asks only once' do
-        server.ready?
+        controller.ready?
         client1.capture_output
-        server.ready?
-        expect(client1.capture_output).to_not match(/player(\s*\S*)*#{Client::INPUT_SYMBOL}/i)
+        controller.ready?
+        expect(client1.capture_output).to_not match(num_players_prompt_regex)
       end
 
       context 'player count is entered but not met' do
-        it 'does not run game' do
+        it 'is not ready' do
           client1.provide_input('2')
-          server.ready?
-          expect(client1.capture_output).to_not match(/game is starting/i)
+          expect(controller).to_not be_ready
+          # controller.ready?
+          # expect(client1.capture_output).to_not match(/game is starting/i)
         end
       end
 
       context 'player count is met' do
-        it 'starts a game' do
+        it 'is ready' do
           create_and_accept_new_client
           client1.provide_input('2')
-          server.ready?
-          expect(controller.desired_player_count).to eq(controller.num_players)
-          expect(client1.capture_output).to match(/game is starting/i)
+          expect(controller).to be_ready
+          # controller.try_run
+          # expect(client1.capture_output).to match(/game is starting/i)
         end
       end
 
       context 'player count is NOT met' do
-        it 'does not start a game' do
-          server.ready?
-          expect(client1.capture_output).to_not match(/game is starting/i)
+        it 'is not ready' do
+          expect(controller).to_not be_ready
+          # controller.try_run
+          # expect(client1.capture_output).to_not match(/game is starting/i)
         end
+      end
+    end
+  end
+
+  describe '#started?' do
+    let!(:controller) { server.controller }
+
+    context 'before game is started' do
+      it 'returns false' do
+        expect(controller).to_not be_started
+      end
+    end
+
+    context 'after game has been started' do
+      before do
+        controller.start_game
+      end
+
+      it 'returns true' do
+        expect(controller).to be_started
       end
     end
   end

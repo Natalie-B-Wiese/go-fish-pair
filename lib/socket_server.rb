@@ -24,7 +24,11 @@ class SocketServer
     puts 'No client to accept'
   end
 
-  def ready?
-    controller.ready?
+  def run_game_if_possible
+    if controller.started?
+      controller.run_round
+    elsif controller.ready?
+      controller.start_game
+    end
   end
 end

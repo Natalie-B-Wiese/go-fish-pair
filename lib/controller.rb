@@ -1,12 +1,16 @@
+require_relative 'game'
+
+# manages a single Go Fish game and all humans joined on that game
 class Controller
   attr_reader :clients, :messages
 
-  attr_accessor :desired_player_count
+  attr_accessor :desired_player_count, :game
 
   def initialize
     @clients = []
     @messages = {}
     @desired_player_count = nil
+    @game = nil
   end
 
   def add_client(client)
@@ -18,21 +22,34 @@ class Controller
     @clients.length
   end
 
-  def ready?
-    check_desired_player_count!
-    return if desired_player_count.nil? || num_players != desired_player_count
-
-    host.puts_socket('Game is starting...')
-  end
-
   def host
     clients.first
   end
 
+  def started?
+    !game.nil?
+  end
+
+  def ready?
+    collect_player_count
+    desired_player_count && num_players == desired_player_count
+  end
+
+  def start_game
+    self.game = Game.new
+    @clients.each { |client| client.puts_socket('Game is starting...') }
+  end
+
+  def run_round
+    return unless started?
+
+    puts 'running!'
+  end
+
   private
 
-  def check_desired_player_count!
-    # Goal: set check_desired_player_count and send message
+  def collect_player_count
+    # Goal: set desired_player_count and send message
     # Check if input
     # Check if input is valid
     #
