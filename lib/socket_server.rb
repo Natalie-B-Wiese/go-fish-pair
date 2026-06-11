@@ -1,33 +1,25 @@
 require 'socket'
 require_relative 'client'
-require_relative 'controller'
+require_relative 'room'
 require_relative 'player'
 require_relative 'user'
 
 class SocketServer
   PORT = '3336'.freeze
 
-  attr_reader :controller
+  attr_reader :pending_clients, :rooms
+
+  def initialize
+    @pending_clients = []
+    @rooms = []
+  end
 
   def start
     @server = TCPServer.new(PORT)
-    @controller = Controller.new
   end
 
   def stop
     @server.close if @server
-  end
-
-  def pending_clients
-    @pending_clients ||= []
-  end
-
-  def pending_users
-    @pending_users ||= []
-  end
-
-  def names_asked
-    @names_asked ||= {}
   end
 
   def accept_new_client
@@ -39,15 +31,25 @@ class SocketServer
     # puts 'No client to accept'
   end
 
-  def handle_pending_clients
-    pending_clients.each do |client|
-      collect_client_name(client)
-    end
+  def open_room_ids
+    rooms.map(&:id)
+  end
 
-    pending_users.each do |user|
-      names_asked.delete(user.client)
-      pending_clients.delete(user.client)
-    end
+  def room_by_id(room_id)
+    rooms[rooms.index { |room| room.id == room_id }]
+  end
+
+  def handle_pending_clients
+    ready_clients = pending_clients.select { |client| client.ready?(open_room_ids) }
+
+    # delete ready clients from pending clients
+    pending_clients.reject! { |client| client.ready?(open_room_ids) }
+
+    return if ready_clients.nil?
+
+    # move all ready clients to a game
+    handle_pending_hosts(ready_clients.select(&:host?))
+    handle_pending_visitors(ready_clients.reject(&:host?))
   end
 
   def run_game_if_possible
@@ -60,26 +62,19 @@ class SocketServer
 
   private
 
-  def collect_client_name(client)
-    client.ask_socket('Enter name') unless names_asked[client]
-    names_asked[client] = true
-
-    input = client.read_socket
-    return if input.empty?
-
-    validate_player_name(input.chomp.strip, client)
-  end
-
-  def validate_player_name(name, client)
-    if valid_player_name?(name)
-      pending_users.push(User.new(client, Player.new(name)))
-    else
-      client.puts_socket('Invalid name!')
-      names_asked[client] = nil
+  # hosts get their own room
+  def handle_pending_hosts(host_clients)
+    host_clients.each do |client|
+      user = User.new(client, Player.new(client.name))
+      rooms.push(Room.new(user))
     end
   end
 
-  def valid_player_name?(name)
-    !name.empty?
+  # visitors join existing room
+  def handle_pending_visitors(visitor_clients)
+    visitor_clients.each do |client|
+      user = User.new(client, Player.new(client.name))
+      room_by_id(client.desired_room_id).add_user(user)
+    end
   end
 end

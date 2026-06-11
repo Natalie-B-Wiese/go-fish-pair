@@ -13,3 +13,17 @@ returns true if it meets that number
 Ask the host how many players if they haven't be asked
 Validate response
 If valid return the response
+
+
+# Room
+Game
+Users
+
+Room creating game
+
+Room has methods to run the game
+Should this be a loop?
+
+
+
+
