@@ -31,10 +31,12 @@ class SocketServer
     # puts 'No client to accept'
   end
 
+  # not tested
   def open_room_ids
-    rooms.map(&:id)
+    rooms.reject(&:full).map(&:id)
   end
 
+  # not tested
   def room_by_id(room_id)
     rooms[rooms.index { |room| room.id == room_id }]
   end
