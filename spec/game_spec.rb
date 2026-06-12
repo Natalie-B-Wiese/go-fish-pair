@@ -120,6 +120,21 @@ describe Game do
       expect(client2.capture_output).to match(/#{player1_name}'s turn/)
     end
 
+    it 'shows hand and turn only once' do
+      client1.capture_output
+      client2.capture_output
+
+      game.play_turn
+      result1 = client1.capture_output
+      result2 = client2.capture_output
+
+      expect(result1).to_not match(/of/i)
+      expect(result2).to_not match(/of/i)
+
+      expect(result1).to_not match(/your turn/i)
+      expect(result2).to_not match(/#{player1_name}'s turn/)
+    end
+
     it 'asks current player for a rank' do
       expect(client1.capture_output).to match(question_regex(/rank/))
     end

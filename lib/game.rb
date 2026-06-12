@@ -7,7 +7,7 @@ class Game
 
   attr_reader :users, :deck, :inputs
 
-  attr_accessor :current_player_index
+  attr_accessor :current_player_index, :shown_hand
 
   def initialize(users)
     @users = users
@@ -17,6 +17,7 @@ class Game
       rank: Input.new,
       player: Input.new
     }
+    @shown_hand = false
   end
 
   def clients
@@ -61,7 +62,8 @@ class Game
   # play_turn (player, rank:, opponent:)
   # play_turn (player, opponent: someone, rank: 'A')
   def play_turn
-    print_round
+    print_round unless shown_hand?
+    self.shown_hand = true
 
     # get ranks
     collect_rank unless inputs[:rank].value
@@ -285,5 +287,9 @@ class Game
 
   def current_user
     users[current_player_index]
+  end
+
+  def shown_hand?
+    !!shown_hand
   end
 end
