@@ -1,10 +1,11 @@
 require_relative 'deck'
+require_relative 'input'
 
 class Game
   SMALL_GAME_CARDS = 7
   BIG_GAME_CARDS = 5
 
-  attr_reader :users, :deck
+  attr_reader :users, :deck, :inputs
 
   attr_accessor :current_player_index
 
@@ -12,6 +13,9 @@ class Game
     @users = users
     @deck = Deck.new
     @current_player_index = 0
+    @inputs = {
+      rank: Input.new
+    }
   end
 
   def clients
@@ -53,6 +57,13 @@ class Game
   # play_turn (player, opponent: someone, rank: 'A')
   def play_turn
     print_round
+
+    # get ranks
+    collect_rank unless inputs[:rank].value
+    return unless inputs[:rank].value
+
+    puts 'hi'
+
     # current_client.valid_rank_and_player(self)
 
     # return unless current_client.input_valid?
@@ -114,6 +125,24 @@ class Game
   end
 
   private
+
+  def collect_rank
+    current_user.client.ask_socket('Enter rank') unless inputs[:rank].sent?
+    inputs[:rank].send
+
+    input = current_user.client.read_socket
+    return if input.empty?
+
+    input = input.chomp
+
+    # check if it is valid
+    if current_user.player.includes_card_with_rank?(input)
+      inputs[:rank].value = input
+    else
+      current_user.client.puts_socket('Invalid rank!')
+      inputs[:rank].unsend
+    end
+  end
 
   def starting_announcement
     clients.each do |client|

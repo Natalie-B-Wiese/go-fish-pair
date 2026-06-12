@@ -40,6 +40,10 @@ describe Game do
     client
   end
 
+  def question_regex(regex)
+    Regexp.new(regex.source + /.*#{Client::INPUT_SYMBOL}/.source)
+  end
+
   describe '#start' do
     # shuffles a deck
     # deals the deck to the players
@@ -88,13 +92,24 @@ describe Game do
     let(:users) { [user1, user2] }
     let(:game) { Game.new(users) }
 
+    let(:card1) { Card.new('A', 'Spades') }
+    let(:card2) { Card.new('5', 'Hearts') }
+
+    let(:card3) { Card.new('A', 'Hearts') }
+    let(:card4) { Card.new('A', 'Diamonds') }
+    let(:card5) { Card.new('A', 'Clubs') }
+
     before do
       game.start
+      game.users[0].player.cards = [card1, card2]
+      game.users[1].player.cards = [card3, card4, card5]
+
       client1.capture_output
       client2.capture_output
 
       game.play_turn
     end
+
     it 'shows all players their hand' do
       expect(client1.capture_output).to match(/of/i)
       expect(client2.capture_output).to match(/of/i)
@@ -103,6 +118,38 @@ describe Game do
     it 'shows whose turn it is' do
       expect(client1.capture_output).to match(/your turn/i)
       expect(client2.capture_output).to match(/#{player1_name}'s turn/)
+    end
+
+    it 'asks current player for a rank' do
+      expect(client1.capture_output).to match(question_regex(/rank/))
+    end
+
+    it 'asks for rank only once' do
+      client1.capture_output
+      game.play_turn
+      expect(client1.capture_output).not_to match(question_regex(/rank/))
+    end
+
+    context 'when current player provides rank they do not have' do
+      before do
+        rank_not_have = '2'
+        client1.provide_input(rank_not_have)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'shows invalid message' do
+        expect(client1.capture_output).to match(/invalid/i)
+      end
+
+      it 'will ask for rank again on next run' do
+        game.play_turn
+        expect(client1.capture_output).to match(question_regex(/rank/))
+      end
+    end
+
+    context 'when current player provides a rank they have' do
     end
   end
 
