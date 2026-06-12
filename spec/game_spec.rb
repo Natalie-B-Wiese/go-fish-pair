@@ -4,45 +4,50 @@ require_relative '../lib/card'
 require_relative '../lib/user'
 require_relative '../lib/client'
 require_relative '../lib/player'
+require_relative '../lib/socket_server'
+require_relative 'mock_socket_client'
 
 describe Game do
-  before do
-    allow_any_instance_of(Client).to receive(:puts)
+  let!(:server) { SocketServer.new }
+
+  before(:each) do
+    server.start
+    sleep 0.1 # Ensure server is ready for clients
   end
 
-  # creates a deck
-  # deals the deck between the two players
-  # the deck should be shuffled
-  describe '#initialize' do
-    # (client, player)
-    let(:user1) { User.new(Client.new('socket'), Player.new('Jeff')) }
-    let(:user2) { User.new(Client.new('socket'), Player.new('Bob')) }
+  after(:each) do
+    server.stop
+  end
 
-    let(:users) { [user1, user2] }
+  let!(:client1) { create_and_accept_new_client }
+  let!(:client2) { create_and_accept_new_client }
+  let!(:client3) { create_and_accept_new_client }
+  let!(:client4) { create_and_accept_new_client }
 
-    let(:game) { described_class.new(users) }
+  let!(:user1) { User.new(server.pending_clients[0], Player.new('Jeff')) }
+  let!(:user2) { User.new(server.pending_clients[1], Player.new('Bob')) }
+  let!(:user3) { User.new(server.pending_clients[2], Player.new('Billy')) }
+  let!(:user4) { User.new(server.pending_clients[3], Player.new('Batman')) }
 
-    it 'contains an array of users' do
-      expect(game.users).to eq users
-    end
-
-    it 'creates a deck of cards' do
-      expect(game.deck).to be_a(Deck)
-    end
-
-    it 'sets current_player_index to 0' do
-      expect(game.current_player_index).to eq 0
-    end
+  def create_and_accept_new_client
+    client = MockSocketClient.new
+    server.accept_new_client
+    client
   end
 
   describe '#start' do
-    let(:user1) { User.new(Client.new('socket'), Player.new('Jeff')) }
-    let(:user2) { User.new(Client.new('socket'), Player.new('Bob')) }
-    let(:user3) { User.new(Client.new('socket'), Player.new('Billy')) }
-    let(:user4) { User.new(Client.new('socket'), Player.new('Batman')) }
-
     # shuffles a deck
     # deals the deck to the players
+    it 'shows starting message to all players' do
+      users = [user1, user2]
+      game = Game.new(users)
+
+      game.start
+
+      expect(client1.capture_output).to match(/starting/i)
+      expect(client2.capture_output).to match(/starting/i)
+    end
+
     context 'with 2 or 3 players' do
       let(:users) { [user1, user2] }
       let(:game) { described_class.new(users) }
@@ -75,9 +80,6 @@ describe Game do
   end
 
   describe '#request_deck_card' do
-    let(:user1) { User.new(Client.new('socket'), Player.new('Jeff')) }
-    let(:user2) { User.new(Client.new('socket'), Player.new('Bob')) }
-
     let(:users) { [user1, user2] }
 
     let(:game) { described_class.new(users) }

@@ -54,6 +54,8 @@ class Room
   def run_round
     return unless started?
 
-    puts 'running!'
+    # return if game won
+
+    game.play_turn
   end
 end

@@ -29,14 +29,16 @@ class Game
     else
       deal_cards_to_players(BIG_GAME_CARDS)
     end
+
+    starting_announcement
   end
 
   def request_deck_card(rank)
     if deck.empty?
-      create_deck_action(rank)
+      # create_deck_action(rank)
     else
       card_taken = deck.take_top_card
-      create_deck_action(rank, card_taken.rank)
+      # create_deck_action(rank, card_taken.rank)
 
       current_player.add_card(card_taken)
 
@@ -112,6 +114,12 @@ class Game
   end
 
   private
+
+  def starting_announcement
+    clients.each do |client|
+      client.puts_socket('Game is starting!')
+    end
+  end
 
   def deal_cards_to_players(num_cards_to_deal)
     num_cards_to_deal.times do
