@@ -19,6 +19,34 @@ describe SocketServer do
     Regexp.new(regex.source + /(\s*\S*)*#{Client::INPUT_SYMBOL}/.source)
   end
 
+  # creates a host and a room
+  def create_host_and_room(host_name, room_capacity, room_id)
+    mock_client = create_and_accept_new_client
+    host_client = server.pending_clients.last
+    host_client.inputs[:name].value = host_name
+    host_client.inputs[:join_or_create].value = 'create'
+    host_client.inputs[:desired_player_count].value = room_capacity
+
+    server.handle_pending_clients
+    server.rooms.last.id = room_id
+
+    # user = User.new(host_client, Player.new(host_client.name))
+    # server.rooms.push(Room.new(user, id: room_id))
+  end
+
+  # creates a visitor and joins them in the room
+  def create_visitor_and_join(name, room_id)
+    mock_client = create_and_accept_new_client
+    client = server.pending_clients.last
+    client.inputs[:name].value = name
+    client.inputs[:join_or_create].value = 'join'
+    client.inputs[:room_id].value = room_id
+
+    server.handle_pending_clients
+
+    # server.room_by_id(room_id).add_user(client)
+  end
+
   # creates and accepts a new client and gives the client a name
   def create_named_client(name)
     client = create_and_accept_new_client
@@ -237,18 +265,13 @@ describe SocketServer do
 
     context 'when named client successfully joins an available room as visitor' do
       let(:room_id) { '1234' }
-      let(:client2_name) { 'Henry' }
-
-      let!(:client2) { create_named_client(client2_name) }
 
       before do
-        client1.provide_input(valid_name)
-        server.handle_pending_clients
-        client1.capture_output
+        server.pending_clients.clear
 
-        create_room(client1, capacity: 2, room_id: room_id)
-
-        join_room(client2, room_id)
+        # create_host_and_room(host_name, room_capacity, room_id)
+        create_host_and_room('Bob', 2, room_id)
+        create_visitor_and_join('Henry', room_id)
       end
 
       it 'add the client to the room' do
