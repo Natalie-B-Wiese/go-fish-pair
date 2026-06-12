@@ -117,6 +117,7 @@ describe SocketServer do
       it 'asks only once' do
         server.handle_pending_clients
         client1.capture_output
+        server.handle_pending_clients
 
         expect(client1.capture_output).to_not match(question_regex(/name/))
       end
@@ -234,7 +235,89 @@ describe SocketServer do
       end
     end
 
-    context 'when host joins a room' do
+    context 'when host has entered all information' do
+      let(:capacity) { 2 }
+      let(:host_name) { 'Natalie' }
+      before do
+        server.handle_pending_clients
+        client1.provide_input(host_name)
+        server.handle_pending_clients
+
+        client1.provide_input('create')
+        server.handle_pending_clients
+
+        client1.provide_input(capacity.to_s)
+        client1.capture_output
+        server.handle_pending_clients
+      end
+
+      it 'creates a new room' do
+        expect(server.rooms.length).to eq 1
+      end
+
+      it 'removes client from pending clients' do
+        expect(server.pending_clients.length).to eq 0
+      end
+    end
+
+    context 'when visitor joins available room' do
+      let(:capacity) { 2 }
+      let(:host_name) { 'Natalie' }
+
+      let!(:client2) { create_and_accept_new_client }
+      let(:visitor_name) { 'Jeff' }
+
+      before do
+        # create the room and host
+        server.handle_pending_clients
+        client1.provide_input(host_name)
+        server.handle_pending_clients
+
+        client1.provide_input('create')
+        server.handle_pending_clients
+
+        client1.provide_input(capacity.to_s)
+        client1.capture_output
+        server.handle_pending_clients
+
+        # create the visitor and join the room
+        server.handle_pending_clients
+        client2.provide_input(visitor_name)
+        server.handle_pending_clients
+
+        client2.provide_input('join')
+        server.handle_pending_clients
+
+        client2.capture_output
+        client2.provide_input(server.rooms[0].id)
+        server.handle_pending_clients
+      end
+
+      it 'removes client from pending clients' do
+        expect(server.pending_clients.length).to eq 0
+      end
+
+      it 'adds client to room' do
+        expect(server.rooms[0].num_players).to eq 2
+      end
+    end
+
+    xcontext 'when host creates a room and visitor joins room' do
+      let!(:host_client) { accept_new_client }
+      let(:host_name) { 'Jeff' }
+      let(:capacity) { 2 }
+      before do
+        server.handle_pending_clients
+        host_client.provide_input(host_name)
+        server.handle_pending_clients
+        host_client.provide_input('create')
+        server.handle_pending_clients
+        host_client.provide_input(capacity.to_s)
+        server.handle_pending_clients
+      end
+    end
+
+    xcontext 'when host joins a room' do
       before do
         server.pending_clients.clear
 
@@ -254,7 +337,7 @@ describe SocketServer do
       end
     end
 
-    context 'when visitor joins a room' do
+    xcontext 'when visitor joins a room' do
       let(:room_id) { '1234' }
 
       before do

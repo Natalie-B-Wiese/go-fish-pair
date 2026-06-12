@@ -13,4 +13,8 @@ class User
   def same_player?(compare_player)
     player == compare_player
   end
+
+  def name
+    player.name
+  end
 end
