@@ -33,7 +33,7 @@ class SocketServer
 
   # not tested
   def open_room_ids
-    rooms.reject(&:full).map(&:id)
+    rooms.reject(&:full?).map(&:id)
   end
 
   # not tested
