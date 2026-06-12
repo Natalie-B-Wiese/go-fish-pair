@@ -218,6 +218,53 @@ describe Game do
         expect(client2.capture_output).to match(/#{player1_name} requested a A.*from you/)
       end
     end
+
+    context 'when opponent has that card' do
+      before do
+        rank_have = 'A'
+        client1.provide_input(rank_have)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'it gives the card' do
+        expect(client1.capture_output).to match(/gave/)
+        expect(client2.capture_output).to match(/gave/)
+      end
+
+      it 'does not do deck action' do
+        expect(client1.capture_output).to_not match(/deck/)
+        expect(client2.capture_output).to_not match(/deck/)
+      end
+    end
+
+    context 'when opponent does not have that card' do
+      before do
+        rank_have = '5'
+        client1.provide_input(rank_have)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'it pulls from the deck' do
+        expect(client1.capture_output).to match(/deck/)
+        expect(client2.capture_output).to match(/deck/)
+      end
+    end
   end
 
   xdescribe '#request_deck_card' do

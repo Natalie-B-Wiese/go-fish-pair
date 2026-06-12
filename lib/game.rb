@@ -40,10 +40,14 @@ class Game
 
   def request_deck_card(rank)
     if deck.empty?
-      # create_deck_action(rank)
+      users.each do |user|
+        user.client.puts_socket('Deck is empty')
+      end
     else
       card_taken = deck.take_top_card
-      # create_deck_action(rank, card_taken.rank)
+      users.each do |user|
+        user.client.puts_socket("#{current_player.name} grabbed a card from the deck is empty")
+      end
 
       current_player.add_card(card_taken)
 
@@ -95,6 +99,7 @@ class Game
   def request_card_from_user(rank, user)
     log_request(rank, user)
     cards_taken = user.player.take_cards_with_rank(rank)
+    log_give(user, cards_taken.length)
 
     if cards_taken.empty?
       request_deck_card(rank)
@@ -111,6 +116,12 @@ class Game
       else
         user.client.puts_socket("#{current_player.name} requested a #{rank} from #{opponent.name}")
       end
+    end
+  end
+
+  def log_give(opponent, num_cards_given)
+    users.each do |user|
+      user.client.puts_socket("#{opponent.name} gave #{num_cards_given} cards to #{current_player.name}")
     end
   end
 
