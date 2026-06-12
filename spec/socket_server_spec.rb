@@ -211,6 +211,8 @@ describe SocketServer do
       # client receives welcome message
       # a new room is created
       before do
+        capacity = '2'
+
         # give client a name
         client1.provide_input(valid_name)
         server.handle_pending_clients
@@ -220,7 +222,7 @@ describe SocketServer do
         client1.provide_input('create')
         server.handle_pending_clients
 
-        client1.provide_input('2')
+        client1.provide_input(capacity)
         server.handle_pending_clients
       end
 

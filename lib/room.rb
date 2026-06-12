@@ -19,7 +19,7 @@ class Room
 
   def add_user(user)
     users.push(user)
-    user.client.puts_socket 'Welcome to Go Fish!'
+    # TODO: show room stuff
   end
 
   def num_players
@@ -40,7 +40,7 @@ class Room
 
   def start_game
     self.game = Game.new(users)
-    users.each { |user| user.client.puts_socket('Game is starting...') }
+    game.start
   end
 
   def run_round
