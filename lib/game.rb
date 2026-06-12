@@ -150,8 +150,23 @@ class Game
   end
 
   def print_round
+    show_cards
+    show_whose_turn
+  end
+
+  def show_cards
     users.each do |user|
       user.client.puts_socket(user.player.cards_to_s)
+    end
+  end
+
+  def show_whose_turn
+    users.each do |user|
+      if user == current_user
+        user.client.puts_socket('It is your turn')
+      else
+        user.client.puts_socket("It is #{current_player.name}'s turn")
+      end
     end
   end
 
@@ -163,5 +178,9 @@ class Game
   def switch_turn
     self.current_player_index += 1
     self.current_player_index = 0 if current_player_index >= players.length
+  end
+
+  def current_user
+    users[current_player_index]
   end
 end

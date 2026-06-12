@@ -24,10 +24,15 @@ describe Game do
   let!(:client3) { create_and_accept_new_client }
   let!(:client4) { create_and_accept_new_client }
 
-  let!(:user1) { User.new(server.pending_clients[0], Player.new('Jeff')) }
-  let!(:user2) { User.new(server.pending_clients[1], Player.new('Bob')) }
-  let!(:user3) { User.new(server.pending_clients[2], Player.new('Billy')) }
-  let!(:user4) { User.new(server.pending_clients[3], Player.new('Batman')) }
+  let(:player1_name) { 'Jeff' }
+  let(:player2_name) { 'Bob' }
+  let(:player3_name) { 'Billy' }
+  let(:player4_name) { 'Batman' }
+
+  let!(:user1) { User.new(server.pending_clients[0], Player.new(player1_name)) }
+  let!(:user2) { User.new(server.pending_clients[1], Player.new(player2_name)) }
+  let!(:user3) { User.new(server.pending_clients[2], Player.new(player3_name)) }
+  let!(:user4) { User.new(server.pending_clients[3], Player.new(player4_name)) }
 
   def create_and_accept_new_client
     client = MockSocketClient.new
@@ -93,6 +98,11 @@ describe Game do
     it 'shows all players their hand' do
       expect(client1.capture_output).to match(/of/i)
       expect(client2.capture_output).to match(/of/i)
+    end
+
+    it 'shows whose turn it is' do
+      expect(client1.capture_output).to match(/your turn/i)
+      expect(client2.capture_output).to match(/#{player1_name}'s turn/)
     end
   end
 
