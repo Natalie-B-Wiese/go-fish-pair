@@ -180,7 +180,7 @@ class Game
 
     input = input.chomp.to_i
 
-    opponent = user_by_id(id)
+    opponent = user_by_id(input)
 
     # check if it is valid
     if opponent && opponent != current_user
