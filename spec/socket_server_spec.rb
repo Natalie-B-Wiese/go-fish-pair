@@ -234,24 +234,15 @@ describe SocketServer do
       end
     end
 
-    context 'named client successfully joins a room as host' do
-      # client is removed from list
-      # client receives welcome message
-      # a new room is created
+    context 'when host joins a room' do
       before do
-        capacity = '2'
+        server.pending_clients.clear
 
-        # give client a name
-        client1.provide_input(valid_name)
-        server.handle_pending_clients
-        client1.capture_output
+        capacity = 2
+        room_id = '2412'
 
-        # make client create room
-        client1.provide_input('create')
-        server.handle_pending_clients
-
-        client1.provide_input(capacity)
-        server.handle_pending_clients
+        # create_host_and_room(host_name, room_capacity, room_id)
+        create_host_and_room('Bob', capacity, room_id)
       end
 
       it 'creates a new room' do
@@ -263,7 +254,7 @@ describe SocketServer do
       end
     end
 
-    context 'when named client successfully joins an available room as visitor' do
+    context 'when visitor joins a room' do
       let(:room_id) { '1234' }
 
       before do
