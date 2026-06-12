@@ -6,8 +6,7 @@ while true
   begin
     server.accept_new_client
     server.handle_pending_clients
-    # game = server.create_game_if_possible
-    # server.run_game_if_possible
+    server.run_games
   rescue StandardError
     server.stop
   end

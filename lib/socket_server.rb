@@ -54,11 +54,15 @@ class SocketServer
     handle_pending_visitors(ready_clients.reject(&:host?))
   end
 
-  def run_game_if_possible
-    if controller.started?
-      controller.run_round
-    elsif controller.ready?
-      controller.start_game
+  def run_games
+    rooms.each { |room| run_room_if_possible(room) }
+  end
+
+  def run_room_if_possible(room)
+    if room.started?
+      room.run_round
+    elsif room.full?
+      room.start_game
     end
   end
 

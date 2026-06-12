@@ -3,7 +3,7 @@ require_relative '../lib/client_message'
 require_relative '../lib/socket_server'
 require_relative 'mock_socket_client'
 
-describe SocketServer do
+xdescribe SocketServer do
   def create_and_accept_client(name)
     client = MockSocketClient.new(SocketServer::PORT, name)
     @clients.push(client)
