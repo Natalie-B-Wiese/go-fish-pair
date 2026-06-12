@@ -14,7 +14,8 @@ class Game
     @deck = Deck.new
     @current_player_index = 0
     @inputs = {
-      rank: Input.new
+      rank: Input.new,
+      player: Input.new
     }
   end
 
@@ -62,8 +63,10 @@ class Game
     collect_rank unless inputs[:rank].value
     return unless inputs[:rank].value
 
-    puts 'hi'
+    collect_player unless inputs[:player].value
+    return unless inputs[:player].value
 
+    puts 'hi'
     # current_client.valid_rank_and_player(self)
 
     # return unless current_client.input_valid?
@@ -126,6 +129,26 @@ class Game
 
   private
 
+  # id is 1-based
+  def user_by_id(id)
+    users[id + 1]
+  end
+
+  def show_opponent_options
+    players_with_id = []
+    users.each_with_index do |user, index|
+      players_with_id.push((index + 1).to_s + ': ' + user.player.name)
+    end
+
+    # exclude self from this list
+    players_with_id.delete_at(current_player_index)
+    current_user.client.puts_socket(players_with_id.join(', '))
+  end
+
+  def all_but_current_user
+    users - [current_user]
+  end
+
   def collect_rank
     current_user.client.ask_socket('Enter rank') unless inputs[:rank].sent?
     inputs[:rank].send
@@ -141,6 +164,30 @@ class Game
     else
       current_user.client.puts_socket('Invalid rank!')
       inputs[:rank].unsend
+    end
+  end
+
+  def collect_player
+    unless inputs[:player].sent?
+      show_opponent_options
+      current_user.client.ask_socket('Enter player id')
+    end
+
+    inputs[:player].send
+
+    input = current_user.client.read_socket
+    return if input.empty?
+
+    input = input.chomp.to_i
+
+    opponent = user_by_id(id)
+
+    # check if it is valid
+    if opponent && opponent != current_user
+      inputs[:player].value = opponent
+    else
+      current_user.client.puts_socket('Invalid player id!')
+      inputs[:player].unsend
     end
   end
 

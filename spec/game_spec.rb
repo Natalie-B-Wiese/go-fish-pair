@@ -150,6 +150,33 @@ describe Game do
     end
 
     context 'when current player provides a rank they have' do
+      before do
+        rank_have = 'A'
+        client1.provide_input(rank_have)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'does not ask for rank' do
+        game.play_turn
+        expect(client1.capture_output).to_not match(question_regex(/rank/))
+      end
+
+      it 'shows a list of users and ids to request from exluding self' do
+        result = client1.capture_output
+        expect(result).to match(/"2: #{player2_name}"/)
+      end
+
+      it 'asks for a player id' do
+        expect(client1.capture_output).to match(question_regex(/player/))
+      end
+
+      it 'asks for player id only once' do
+        client1.capture_output
+        game.play_turn
+        expect(client1.capture_output).not_to match(question_regex(/player/))
+      end
     end
   end
 
