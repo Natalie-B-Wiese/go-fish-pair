@@ -66,6 +66,18 @@ class Game
     collect_player unless inputs[:player].value
     return unless inputs[:player].value
 
+    rank = inputs[:rank].value
+    opponent = inputs[:player].value
+
+    current_user.client.puts_socket("You requested a #{rank} from #{opponent.name}")
+    all_but_current_user.each do |user|
+      if user == opponent
+        user.client.puts_socket("#{current_player.name} requested a #{rank} from you")
+      else
+        user.client.puts_socket("#{current_player.name} requested a #{rank} from #{opponent.name}")
+      end
+    end
+
     puts 'hi'
     # current_client.valid_rank_and_player(self)
 
@@ -131,7 +143,7 @@ class Game
 
   # id is 1-based
   def user_by_id(id)
-    users[id + 1]
+    users[id - 1]
   end
 
   def show_opponent_options

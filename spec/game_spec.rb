@@ -197,6 +197,27 @@ describe Game do
         end
       end
     end
+
+    context 'when current player has chosen a valid rank and opponent' do
+      before do
+        rank_have = 'A'
+        client1.provide_input(rank_have)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'it shows the result of the move to all users' do
+        expect(client1.capture_output).to match(/requested a A.*from.*#{player2_name}/)
+        expect(client2.capture_output).to match(/#{player1_name} requested a A.*from you/)
+      end
+    end
   end
 
   xdescribe '#request_deck_card' do
