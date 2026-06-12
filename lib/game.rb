@@ -69,14 +69,7 @@ class Game
     rank = inputs[:rank].value
     opponent = inputs[:player].value
 
-    current_user.client.puts_socket("You requested a #{rank} from #{opponent.name}")
-    all_but_current_user.each do |user|
-      if user == opponent
-        user.client.puts_socket("#{current_player.name} requested a #{rank} from you")
-      else
-        user.client.puts_socket("#{current_player.name} requested a #{rank} from #{opponent.name}")
-      end
-    end
+    request_card_from_user(rank, opponent)
 
     puts 'hi'
     # current_client.valid_rank_and_player(self)
@@ -99,14 +92,25 @@ class Game
 
   # rank and player_name should be validated before this is called
   # This can be private since it is only called by this class
-  def request_card_from_player(rank, player_name)
-    opponent = find_player_by_name(player_name)
-    cards_taken = opponent.take_cards_with_rank(rank)
+  def request_card_from_user(rank, user)
+    log_request(rank, user)
+    cards_taken = user.player.take_cards_with_rank(rank)
 
     if cards_taken.empty?
       request_deck_card(rank)
     else
       current_player.add_cards(cards_taken)
+    end
+  end
+
+  def log_request(rank, opponent)
+    current_user.client.puts_socket("You requested a #{rank} from #{opponent.name}")
+    all_but_current_user.each do |user|
+      if user == opponent
+        user.client.puts_socket("#{current_player.name} requested a #{rank} from you")
+      else
+        user.client.puts_socket("#{current_player.name} requested a #{rank} from #{opponent.name}")
+      end
     end
   end
 
