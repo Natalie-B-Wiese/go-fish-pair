@@ -53,22 +53,22 @@ class Game
   # play_turn (player, opponent: someone, rank: 'A')
   def play_turn
     print_round
-    current_client.valid_rank_and_player(self)
+    # current_client.valid_rank_and_player(self)
 
-    return unless current_client.input_valid?
+    # return unless current_client.input_valid?
 
-    opponent_name = current_client.messages[:opponent].value
-    rank = current_client.messages[:rank].value
+    # opponent_name = current_client.messages[:opponent].value
+    # rank = current_client.messages[:rank].value
 
-    clients.each(&:reset_variables)
+    # clients.each(&:reset_variables)
 
-    create_request_action(opponent_name, rank)
+    # create_request_action(opponent_name, rank)
 
-    previous_player = current_player
-    request_card_from_player(rank, opponent_name)
-    return unless current_player == previous_player
+    # previous_player = current_player
+    # request_card_from_player(rank, opponent_name)
+    # return unless current_player == previous_player
 
-    player_go_again
+    # player_go_again
   end
 
   # rank and player_name should be validated before this is called
@@ -150,8 +150,8 @@ class Game
   end
 
   def print_round
-    clients.each do |client|
-      client.try_print_round(current_client)
+    users.each do |user|
+      user.client.puts_socket(user.player.cards_to_s)
     end
   end
 
