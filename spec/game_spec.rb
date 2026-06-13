@@ -85,8 +85,8 @@ describe Game do
         end
 
         it 'does not switch turns' do
-          result = game.play_turn(rank: rank, opponent: opponent)
-          expect(result.current_player).to eq player1
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
         end
       end
 
@@ -122,8 +122,8 @@ describe Game do
         end
 
         it 'does not switch turns' do
-          result = game.play_turn(rank: rank, opponent: opponent)
-          expect(result.current_player).to eq player1
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
         end
       end
 
@@ -172,8 +172,8 @@ describe Game do
         end
 
         it 'does not switch turns' do
-          result = game.play_turn(rank: rank, opponent: opponent)
-          expect(result.current_player).to eq player1
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
         end
       end
     end
@@ -212,8 +212,8 @@ describe Game do
         end
 
         it 'does not switch turns' do
-          result = game.play_turn(rank: rank, opponent: opponent)
-          expect(result.current_player).to eq player1
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
         end
       end
 
@@ -243,8 +243,82 @@ describe Game do
         end
 
         it 'does not switch turns' do
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
+        end
+      end
+    end
+
+    context 'when go fish and fail' do
+      let(:opponent) { player2 }
+      let(:other_rank) { '5' }
+      let(:rank) { 'A' }
+
+      let(:taken_card) { Card.new(other_rank, 'Spades') }
+
+      before do
+        opponent.cards = [Card.new('8', 'Diamonds')]
+      end
+
+      context 'when player cannot make book' do
+        before do
+          game.deck.cards = [taken_card]
+          player1.cards = [Card.new(rank, 'Hearts')]
+        end
+
+        it 'takes from top of deck and gives to player' do
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(player1.cards).to include taken_card
+          expect(game.deck.cards).to_not include taken_card
+        end
+
+        it 'returns the correct turn result' do
           result = game.play_turn(rank: rank, opponent: opponent)
           expect(result.current_player).to eq player1
+          expect(result.opponent_player).to eq opponent
+          expect(result.rank_requested).to eq rank
+          expect(result.cards_received_opponent).to be_empty
+          expect(result.card_received_deck).to eq taken_card
+          expect(result.was_book_made).to eq false
+          expect(result.go_again?).to eq false
+        end
+
+        it 'switches turns' do
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player2
+        end
+      end
+
+      context 'when player can make a book' do
+        let(:rank) { 'A' }
+        let(:taken_card) { Card.new(other_rank, 'Clubs') }
+
+        before do
+          player1.cards = [Card.new(rank, 'Hearts'), Card.new(other_rank, 'Spades'),
+                           Card.new(other_rank, 'Hearts'), Card.new(other_rank, 'Diamonds')]
+          game.deck.cards = [taken_card]
+        end
+
+        it 'makes a book' do
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(player1.book_count).to eq 1
+          expect(opponent.book_count).to eq 0
+        end
+
+        it 'returns the correct turn result' do
+          result = game.play_turn(rank: rank, opponent: opponent)
+          expect(result.current_player).to eq player1
+          expect(result.opponent_player).to eq opponent
+          expect(result.rank_requested).to eq rank
+          expect(result.cards_received_opponent).to be_empty
+          expect(result.card_received_deck).to eq taken_card
+          expect(result.was_book_made).to eq true
+          expect(result.go_again?).to eq true
+        end
+
+        it 'does not switch turns' do
+          game.play_turn(rank: rank, opponent: opponent)
+          expect(game.current_player).to eq player1
         end
       end
     end
