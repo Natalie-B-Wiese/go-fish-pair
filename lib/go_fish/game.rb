@@ -43,10 +43,13 @@ class Game
                                  cards_received_opponent: cards_taken_from_opponent)
 
     if cards_taken_from_opponent.empty?
-      # request_deck_card(rank, turn_result)
+      request_deck_card(turn_result)
     else
       current_player.add_cards(cards_taken_from_opponent)
-      book_made = current_player.try_make_book(rank)
+    end
+
+    if turn_result.rank_received
+      book_made = current_player.try_make_book(turn_result.rank_received)
       turn_result.was_book_made = true if book_made
     end
 
@@ -68,18 +71,13 @@ class Game
 
   private
 
-  def request_deck_card(rank)
+  def request_deck_card(turn_result)
     if deck.empty?
       # TODO: deck empty message
     else
       card_taken = deck.take_top_card
-
-      # TODO: grab deck action
-
+      turn_result.card_received_deck = card_taken
       current_player.add_card(card_taken)
-
-      # prevent it from switching turns
-      go_again == true if card_taken.rank == rank
     end
   end
 

@@ -1,7 +1,7 @@
 class TurnResult
-  attr_reader :current_player, :opponent_player, :rank_requested, :cards_received_opponent, :card_received_deck
+  attr_reader :current_player, :opponent_player, :rank_requested, :cards_received_opponent
 
-  attr_accessor :was_book_made
+  attr_accessor :was_book_made, :card_received_deck
 
   def initialize(current_player:, opponent_player: nil, rank_requested: nil,
                  cards_received_opponent: [], card_received_deck: nil, was_book_made: false)
@@ -25,9 +25,6 @@ class TurnResult
     rank_received == rank_requested || was_book_made == true
   end
 
-  private
-
-  # TODO: handle if deck is empty
   def rank_received
     if went_fish? && card_received_deck
       card_received_deck.rank
@@ -37,6 +34,8 @@ class TurnResult
       nil
     end
   end
+
+  private
 
   def book_message(player)
     "#{player_to_s(player)} made a book with four #{rank_received}s!"
