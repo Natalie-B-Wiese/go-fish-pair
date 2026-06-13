@@ -94,15 +94,17 @@ describe Game do
 
     let(:card1) { Card.new('A', 'Spades') }
     let(:card2) { Card.new('5', 'Hearts') }
+    let(:card7) { Card.new('3', 'Spades') }
 
     let(:card3) { Card.new('A', 'Hearts') }
     let(:card4) { Card.new('A', 'Diamonds') }
     let(:card5) { Card.new('A', 'Clubs') }
+    let(:card6) { Card.new('5', 'Clubs') }
 
     before do
       game.start
-      game.users[0].player.cards = [card1, card2]
-      game.users[1].player.cards = [card3, card4, card5]
+      game.users[0].player.cards = [card1, card2, card7]
+      game.users[1].player.cards = [card3, card4, card5, card6]
 
       client1.capture_output
       client2.capture_output
@@ -262,7 +264,7 @@ describe Game do
 
     context 'when opponent does not have that card' do
       before do
-        rank_have = '5'
+        rank_have = '3'
         client1.provide_input(rank_have)
         client1.capture_output
 
@@ -280,9 +282,75 @@ describe Game do
         expect(client2.capture_output).to match(/deck/)
       end
     end
+
+    context 'when player makes a book' do
+      before do
+        book_rank = 'A'
+        client1.provide_input(book_rank)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'does not switch turns' do
+        expect(game.current_player_index).to eq 0
+      end
+
+      it 'shows book message to all players' do
+        expect(client1.capture_output).to match(/book/i)
+        expect(client2.capture_output).to match(/book/i)
+      end
+    end
+
+    context 'when player receives card they requested' do
+      before do
+        valid_rank = '5'
+        client1.provide_input(valid_rank)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'does not switch turns' do
+        expect(game.current_player_index).to eq 0
+      end
+    end
+
+    context 'when player does not get desired card and does not make a book' do
+      before do
+        game.deck.cards = []
+        valid_rank = '3'
+        client1.provide_input(valid_rank)
+        client1.capture_output
+
+        game.play_turn
+
+        valid_player_id = '2'
+        client1.provide_input(valid_player_id)
+        client1.capture_output
+
+        game.play_turn
+      end
+
+      it 'switches turns' do
+        expect(game.current_player_index).to eq 1
+      end
+    end
   end
 
-  xdescribe '#request_deck_card' do
+  describe '#request_deck_card' do
     let(:users) { [user1, user2] }
 
     let(:game) { described_class.new(users) }
@@ -397,7 +465,7 @@ describe Game do
           end
 
           it 'switches turn' do
-            game.request_card_from_player(request_rank, opponent.name)
+            game.request_card_from_player(request_rank, opponent)
             expect(game.current_client).to eq opponent
           end
         end
@@ -410,17 +478,17 @@ describe Game do
       end
 
       it 'removes the card from opponent' do
-        game.request_card_from_player(request_rank, opponent.name)
+        game.request_card_from_player(request_rank, opponent)
         expect(opponent.player.cards).to_not include good_card
       end
 
       it 'gives the card to the player' do
-        game.request_card_from_player(request_rank, opponent.name)
+        game.request_card_from_player(request_rank, opponent)
         expect(current_user.player.cards).to include good_card
       end
 
       it 'does not switch turn' do
-        game.request_card_from_player(request_rank, opponent.name)
+        game.request_card_from_player(request_rank, opponent)
         expect(game.current_user).to eq current_user
       end
 
@@ -430,7 +498,7 @@ describe Game do
         opponent_cards_before = opponent.player.cards.length
         matching_card_count = 2
 
-        game.request_card_from_player(request_rank, opponent.name)
+        game.request_card_from_player(request_rank, opponent)
 
         expect(current_user.player.cards.length).to eq(player_cards_before + matching_card_count)
         expect(opponent.player.cards.length).to eq(opponent_cards_before - matching_card_count)
@@ -438,7 +506,7 @@ describe Game do
     end
   end
 
-  xdescribe '#winning_player' do
+  describe '#winning_player' do
     let(:user1) { User.new(Client.new('socket'), Player.new('Jeff')) }
     let(:user2) { User.new(Client.new('socket'), Player.new('Bob')) }
     let(:user3) { User.new(Client.new('socket'), Player.new('Billy')) }

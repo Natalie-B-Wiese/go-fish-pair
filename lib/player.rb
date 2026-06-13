@@ -10,17 +10,6 @@ class Player
     @books = []
   end
 
-  def try_make_book(rank)
-    cards_in_book = cards_with_rank(rank)
-    return nil unless cards_in_book.length == Book::SIZE
-
-    self.cards -= cards_in_book
-    value = Card.rank_to_value(rank)
-    book = Book.new(value)
-    books.push(book)
-    book
-  end
-
   def add_card(card)
     @cards.push(card)
   end
@@ -69,5 +58,16 @@ class Player
 
   def cards_with_rank(rank)
     cards.select { |card| card.rank == rank }
+  end
+
+  def try_make_book(rank)
+    cards_in_book = cards_with_rank(rank)
+    return nil unless cards_in_book.length == Book::SIZE
+
+    self.cards -= cards_in_book
+    value = Card.rank_to_value(rank)
+    book = Book.new(value)
+    books.push(book)
+    book
   end
 end

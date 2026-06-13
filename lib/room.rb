@@ -17,17 +17,15 @@ class Room
     add_user(host_user)
   end
 
-  def add_user(user)
-    users.push(user)
-    # all users should see messages like:
-    # You have joined room 2431
-    #   if there are other players: You are playing with Batman, Henry the Slayer.
-    #   if you are only player (eg you're the host): Invite other players with this room-code: 2431
-    # Waiting for 2 more players...
-    # Jeff has joined!
-    # Waiting for 1 more player...
-    # Henry has joined!
-    # All 6 players have joined. Game is starting!
+  def add_user(new_user)
+    new_user.client.puts_socket("You have joined room #{id}")
+
+    show_current_players_to_new_user(new_user) unless users.empty?
+    show_new_user_to_current_players(new_user)
+
+    users.push(new_user)
+
+    show_capacity_message
   end
 
   def num_players
@@ -57,5 +55,30 @@ class Room
     # return if game won
 
     game.play_turn
+  end
+
+  private
+
+  def puts_to_all_players(message)
+    users.each do |user|
+      user.client.puts_socket(message)
+    end
+  end
+
+  def show_current_players_to_new_user(new_user)
+    other_player_names = users.map(&:name).join(', ')
+    new_user.client.puts_socket("You are playing with #{other_player_names}")
+  end
+
+  def show_new_user_to_current_players(new_user)
+    puts_to_all_players("#{new_user.name} has joined!")
+  end
+
+  def show_capacity_message
+    if full?
+      puts_to_all_players('All players have joined!')
+    else
+      puts_to_all_players("Waiting for #{capacity - num_players} more players...")
+    end
   end
 end

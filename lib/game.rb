@@ -7,17 +7,22 @@ class Game
 
   attr_reader :users, :deck, :inputs
 
-  attr_accessor :current_player_index, :shown_hand
+  attr_accessor :current_player_index, :shown_hand, :go_again
 
   def initialize(users)
     @users = users
     @deck = Deck.new
     @current_player_index = 0
+    reset
+  end
+
+  def reset
     @inputs = {
       rank: Input.new,
       player: Input.new
     }
     @shown_hand = false
+    @go_again = false
   end
 
   def clients
@@ -47,20 +52,20 @@ class Game
     else
       card_taken = deck.take_top_card
       users.each do |user|
-        user.client.puts_socket("#{current_player.name} grabbed a card from the deck is empty")
+        user.client.puts_socket("#{current_player.name} grabbed a card from the deck")
       end
 
       current_player.add_card(card_taken)
 
       # prevent it from switching turns
-      return if card_taken.rank == rank
+      go_again == true if card_taken.rank == rank
     end
-
-    switch_turn
   end
 
   # play_turn (player, rank:, opponent:)
   # play_turn (player, opponent: someone, rank: 'A')
+  # TODO: make it return a round result object
+  # TODO: make play_turn take parameters for collect_rank and collect_player from room
   def play_turn
     print_round unless shown_hand?
     self.shown_hand = true
@@ -77,23 +82,10 @@ class Game
 
     request_card_from_user(rank, opponent)
 
-    puts 'hi'
-    # current_client.valid_rank_and_player(self)
+    # check if book can be made, if book can be made then allow player to go again
 
-    # return unless current_client.input_valid?
-
-    # opponent_name = current_client.messages[:opponent].value
-    # rank = current_client.messages[:rank].value
-
-    # clients.each(&:reset_variables)
-
-    # create_request_action(opponent_name, rank)
-
-    # previous_player = current_player
-    # request_card_from_player(rank, opponent_name)
-    # return unless current_player == previous_player
-
-    # player_go_again
+    switch_turn unless go_again
+    reset
   end
 
   # rank and player_name should be validated before this is called
@@ -291,5 +283,9 @@ class Game
 
   def shown_hand?
     !!shown_hand
+  end
+
+  def go_again?
+    !!go_again
   end
 end
