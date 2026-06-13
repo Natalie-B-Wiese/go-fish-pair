@@ -29,11 +29,14 @@ class GoFishRoom < Room
     collect_opponent unless inputs[:opponent].value
     return unless inputs[:opponent].value
 
-    result = game.play_turn
+    result = game.play_turn(rank: inputs[:rank].value, opponent: inputs[:opponent].value.player)
+    users.each do |user|
+      user.client.puts_socket(result.message(user.player))
+    end
   end
 
   def new_game
-    Game.new(users)
+    Game.new(users.map(&:player))
   end
 
   private

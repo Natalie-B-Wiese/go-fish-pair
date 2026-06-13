@@ -6,12 +6,12 @@ class Game
   SMALL_GAME_CARDS = 7
   BIG_GAME_CARDS = 5
 
-  attr_reader :users, :deck, :inputs
+  attr_reader :players, :deck, :inputs
 
   attr_accessor :current_player_index, :go_again
 
-  def initialize(users)
-    @users = users
+  def initialize(players)
+    @players = players
     @deck = Deck.new
     @current_player_index = 0
     reset
@@ -27,7 +27,7 @@ class Game
 
   def start
     deck.shuffle
-    if users.length <= 3
+    if players.length <= 3
       deal_cards_to_players(SMALL_GAME_CARDS)
     else
       deal_cards_to_players(BIG_GAME_CARDS)
@@ -38,15 +38,15 @@ class Game
   # play_turn (player, opponent: someone, rank: 'A')
   # TODO: make it return a round result object
   # TODO: make play_turn take parameters for collect_rank and collect_player from room
-  def play_turn
+  def play_turn(rank:, opponent_player:)
   end
 
   def opponent_options_s
     opponents_with_id_array = []
-    users.each_with_index do |user, index|
+    players.each_with_index do |player, index|
       next if index == current_player_index
 
-      opponents_with_id_array.push((index + 1).to_s + ': ' + user.player.name)
+      opponents_with_id_array.push((index + 1).to_s + ': ' + player.name)
     end
 
     opponents_with_id_array.join(', ')
@@ -54,60 +54,19 @@ class Game
 
   private
 
-  def reset
-    @inputs = {
-      player: Input.new
-    }
-    @go_again = false
-  end
-
-  def clients
-    @users.map(&:client)
-  end
-
-  def players
-    @users.map(&:player)
-  end
-
   def request_deck_card(rank)
     if deck.empty?
-      users.each do |user|
-        user.client.puts_socket('Deck is empty')
-      end
+      # TODO: deck empty message
     else
       card_taken = deck.take_top_card
-      users.each do |user|
-        user.client.puts_socket("#{current_player.name} grabbed a card from the deck")
-      end
+
+      # TODO: grab deck action
 
       current_player.add_card(card_taken)
 
       # prevent it from switching turns
       go_again == true if card_taken.rank == rank
     end
-  end
-
-  # play_turn (player, rank:, opponent:)
-  # play_turn (player, opponent: someone, rank: 'A')
-  # TODO: make it return a round result object
-  # TODO: make play_turn take parameters for collect_rank and collect_player from room
-  def play_turn_old
-    # get ranks
-    collect_rank unless inputs[:rank].value
-    return unless inputs[:rank].value
-
-    collect_player unless inputs[:player].value
-    return unless inputs[:player].value
-
-    rank = inputs[:rank].value
-    opponent = inputs[:player].value
-
-    request_card_from_user(rank, opponent)
-
-    # check if book can be made, if book can be made then allow player to go again
-
-    switch_turn unless go_again
-    reset
   end
 
   # rank and player_name should be validated before this is called
@@ -141,14 +100,6 @@ class Game
     end
   end
 
-  def current_client
-    clients[current_player_index]
-  end
-
-  def all_but_current_client
-    clients - [current_client]
-  end
-
   def all_but_current_player_names
     all_but_current_client.map(&:name)
   end
@@ -159,17 +110,6 @@ class Game
     return winning_players[0] if winning_players.length == 1
 
     player_with_biggest_value_book(winning_players)
-  end
-
-  private
-
-  # id is 1-based
-  def user_by_id(id)
-    users[id - 1]
-  end
-
-  def all_but_current_user
-    users - [current_user]
   end
 
   def deal_cards_to_players(num_cards_to_deal)
@@ -200,18 +140,9 @@ class Game
     clients.each(&:reset_variables)
   end
 
-  def find_player_by_name(name)
-    players_with_name = players.select { |player| player.name == name }
-    players_with_name[0]
-  end
-
   def switch_turn
     self.current_player_index += 1
     self.current_player_index = 0 if current_player_index >= players.length
-  end
-
-  def current_user
-    users[current_player_index]
   end
 
   def go_again?

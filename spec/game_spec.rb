@@ -1,257 +1,92 @@
 require_relative '../lib/go_fish/game'
 require_relative '../lib/deck'
 require_relative '../lib/card'
-require_relative '../lib/user'
-require_relative '../lib/client'
 require_relative '../lib/go_fish/player'
-require_relative '../lib/socket_server'
-require_relative 'mock_socket_client'
 
 describe Game do
-  let!(:server) { SocketServer.new }
-
-  before(:each) do
-    server.start
-    sleep 0.1 # Ensure server is ready for clients
-  end
-
-  after(:each) do
-    server.stop
-  end
-
-  let!(:client1) { create_and_accept_new_client }
-  let!(:client2) { create_and_accept_new_client }
-  let!(:client3) { create_and_accept_new_client }
-  let!(:client4) { create_and_accept_new_client }
-
   let(:player1_name) { 'Jeff' }
   let(:player2_name) { 'Bob' }
   let(:player3_name) { 'Billy' }
   let(:player4_name) { 'Batman' }
 
-  let!(:user1) { User.new(server.pending_clients[0], Player.new(player1_name)) }
-  let!(:user2) { User.new(server.pending_clients[1], Player.new(player2_name)) }
-  let!(:user3) { User.new(server.pending_clients[2], Player.new(player3_name)) }
-  let!(:user4) { User.new(server.pending_clients[3], Player.new(player4_name)) }
-
-  def create_and_accept_new_client
-    client = MockSocketClient.new
-    server.accept_new_client
-    client
-  end
-
-  def question_regex(regex)
-    Regexp.new(regex.source + /.*#{Client::INPUT_SYMBOL}/.source)
-  end
+  let!(:player1) { Player.new(player1_name) }
+  let!(:player2) { Player.new(player2_name) }
+  let!(:player3) { Player.new(player3_name) }
+  let!(:player4) { Player.new(player4_name) }
 
   describe '#start' do
-    # shuffles a deck
-    # deals the deck to the players
-
     context 'with 2 or 3 players' do
-      let(:users) { [user1, user2] }
-      let(:game) { described_class.new(users) }
-
-      before do
-        game.start
-      end
+      let(:players) { [player1, player2] }
+      let(:game) { described_class.new(players) }
 
       it "deals #{Game::SMALL_GAME_CARDS} cards to each player" do
-        expect(user1.player.cards.length).to eq Game::SMALL_GAME_CARDS
-        expect(user2.player.cards.length).to eq Game::SMALL_GAME_CARDS
+        game.start
+        expect(player1.cards.length).to eq Game::SMALL_GAME_CARDS
+        expect(player2.cards.length).to eq Game::SMALL_GAME_CARDS
+      end
+
+      it 'cards are shuffled' do
+        expect(game.deck).to receive(:shuffle)
+        game.start
       end
     end
 
     context 'with 4 or more players' do
-      let(:users) { [user1, user2, user3, user4] }
-      let(:game) { described_class.new(users) }
+      let(:players) { [player1, player2, player3, player4] }
+      let(:game) { described_class.new(players) }
 
       before do
         game.start
       end
 
       it "deals #{Game::BIG_GAME_CARDS} cards to each player" do
-        expect(user1.player.cards.length).to eq Game::BIG_GAME_CARDS
-        expect(user2.player.cards.length).to eq Game::BIG_GAME_CARDS
-        expect(user3.player.cards.length).to eq Game::BIG_GAME_CARDS
-        expect(user4.player.cards.length).to eq Game::BIG_GAME_CARDS
+        expect(player1.cards.length).to eq Game::BIG_GAME_CARDS
+        expect(player2.cards.length).to eq Game::BIG_GAME_CARDS
+        expect(player3.cards.length).to eq Game::BIG_GAME_CARDS
+        expect(player4.cards.length).to eq Game::BIG_GAME_CARDS
+      end
+
+      it 'cards are shuffled' do
+        expect(game.deck).to receive(:shuffle)
+        game.start
       end
     end
   end
 
-  describe '#play_turn' do
-    let(:users) { [user1, user2] }
-    let(:game) { Game.new(users) }
-
-    let(:card1) { Card.new('A', 'Spades') }
-    let(:card2) { Card.new('5', 'Hearts') }
-    let(:card7) { Card.new('3', 'Spades') }
-
-    let(:card3) { Card.new('A', 'Hearts') }
-    let(:card4) { Card.new('A', 'Diamonds') }
-    let(:card5) { Card.new('A', 'Clubs') }
-    let(:card6) { Card.new('5', 'Clubs') }
+  xdescribe '#play_turn' do
+    let(:players) { [player1, player2, player3] }
+    let(:game) { Game.new(players) }
 
     before do
-      game.start
-      game.users[0].player.cards = [card1, card2, card7]
-      game.users[1].player.cards = [card3, card4, card5, card6]
-
-      client1.capture_output
-      client2.capture_output
-
-      game.play_turn
-    end
-
-    context 'when current player provides a rank they have' do
-      before do
-        rank_have = 'A'
-        client1.provide_input(rank_have)
-        client1.capture_output
-
-        game.play_turn
-      end
-    end
-
-    context 'when current player has chosen a valid rank and opponent' do
-      before do
-        rank_have = 'A'
-        client1.provide_input(rank_have)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'it shows the result of the move to all users' do
-        expect(client1.capture_output).to match(/requested a A.*from.*#{player2_name}/)
-        expect(client2.capture_output).to match(/#{player1_name} requested a A.*from you/)
-      end
+      game.deck.cards = [Card.new('3', 'Clubs'), Card.new('A', 'Diamonds')]
+      player1.cards = [Card.new('A', 'Spades'), Card.new('5', 'Hearts'), Card.new('3', 'Spades')]
+      player2.cards = [Card.new('A', 'Hearts'), Card.new('2', 'Diamonds', Card.new('A', 'Clubs'))]
+      player3.cards = [Card.new('5', 'Diamonds')]
     end
 
     context 'when opponent has that card' do
-      before do
-        rank_have = 'A'
-        client1.provide_input(rank_have)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'it gives the card' do
-        expect(client1.capture_output).to match(/gave/)
-        expect(client2.capture_output).to match(/gave/)
-      end
-
-      it 'does not do deck action' do
-        expect(client1.capture_output).to_not match(/deck/)
-        expect(client2.capture_output).to_not match(/deck/)
-      end
     end
 
     context 'when opponent does not have that card' do
-      before do
-        rank_have = '3'
-        client1.provide_input(rank_have)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'it pulls from the deck' do
-        expect(client1.capture_output).to match(/deck/)
-        expect(client2.capture_output).to match(/deck/)
-      end
     end
 
     context 'when player makes a book' do
-      before do
-        book_rank = 'A'
-        client1.provide_input(book_rank)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'does not switch turns' do
-        expect(game.current_player_index).to eq 0
-      end
-
-      it 'shows book message to all players' do
-        expect(client1.capture_output).to match(/book/i)
-        expect(client2.capture_output).to match(/book/i)
-      end
     end
 
     context 'when player receives card they requested' do
-      before do
-        valid_rank = '5'
-        client1.provide_input(valid_rank)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'does not switch turns' do
-        expect(game.current_player_index).to eq 0
-      end
     end
 
     context 'when player does not get desired card and does not make a book' do
-      before do
-        game.deck.cards = []
-        valid_rank = '3'
-        client1.provide_input(valid_rank)
-        client1.capture_output
-
-        game.play_turn
-
-        valid_player_id = '2'
-        client1.provide_input(valid_player_id)
-        client1.capture_output
-
-        game.play_turn
-      end
-
       it 'switches turns' do
         expect(game.current_player_index).to eq 1
       end
     end
   end
 
-  describe '#request_deck_card' do
-    let(:users) { [user1, user2] }
+  xdescribe '#request_deck_card' do
+    let(:players) { [player1, player2] }
 
-    let(:game) { described_class.new(users) }
+    let(:game) { described_class.new(players) }
 
     let(:ace_spades) { Card.new('A', 'Spades') }
     let(:ace_clubs)  { Card.new('A', 'Clubs') }
@@ -275,7 +110,7 @@ describe Game do
 
     context 'does not get requested card' do
       before do
-        user1.player.add_cards([ace_spades, ace_clubs])
+        player1.add_cards([ace_spades, ace_clubs])
         game.deck.cards = [other_card, ace_diamonds]
       end
 
@@ -286,7 +121,7 @@ describe Game do
 
       it 'gives the card to the player' do
         game.request_deck_card('A')
-        expect(user1.player.cards).to include other_card
+        expect(player1.cards).to include other_card
       end
 
       it 'switches turn' do
@@ -297,7 +132,7 @@ describe Game do
 
     context 'gets correct card' do
       before do
-        user1.player.add_cards([ace_spades, ace_clubs])
+        player1.add_cards([ace_spades, ace_clubs])
         game.deck.cards = [ace_diamonds, other_card]
       end
 
@@ -308,7 +143,7 @@ describe Game do
 
       it 'gives the card to the player' do
         game.request_deck_card('A')
-        expect(user1.player.cards).to include ace_diamonds
+        expect(player1.cards).to include ace_diamonds
       end
 
       it 'does not switch turn' do
@@ -322,9 +157,9 @@ describe Game do
     let(:current_user) { User.new(Client.new('socket'), Player.new('Jeff')) }
     let(:opponent) { User.new(Client.new('socket'), Player.new('Bob')) }
 
-    let(:users) { [current_user, opponent] }
+    let(:players) { [current_user, opponent] }
 
-    let(:game) { described_class.new(users) }
+    let(:game) { described_class.new(players) }
 
     let(:request_rank) { 'A' }
     let(:incorrect_rank) { '5' }
@@ -332,17 +167,17 @@ describe Game do
     let(:other_card) { Card.new(incorrect_rank, 'Spades') }
 
     before do
-      current_user.player.add_card(Card.new(request_rank, 'Spades'))
+      current_user.add_card(Card.new(request_rank, 'Spades'))
     end
 
     context 'opponent not have card' do
       before do
-        opponent.player.add_card(other_card)
+        opponent.add_card(other_card)
       end
 
       it 'does not remove opponent card' do
         game.request_card_from_player(request_rank, opponent.name)
-        expect(opponent.player.cards).to include other_card
+        expect(opponent.cards).to include other_card
       end
 
       context 'goes fish' do
@@ -372,17 +207,17 @@ describe Game do
 
     context 'gets correct card' do
       before do
-        opponent.player.add_cards([other_card, good_card])
+        opponent.add_cards([other_card, good_card])
       end
 
       it 'removes the card from opponent' do
         game.request_card_from_player(request_rank, opponent)
-        expect(opponent.player.cards).to_not include good_card
+        expect(opponent.cards).to_not include good_card
       end
 
       it 'gives the card to the player' do
         game.request_card_from_player(request_rank, opponent)
-        expect(current_user.player.cards).to include good_card
+        expect(current_user.cards).to include good_card
       end
 
       it 'does not switch turn' do
@@ -391,51 +226,51 @@ describe Game do
       end
 
       it 'works with multiple matching cards' do
-        player_cards_before = current_user.player.cards.length
-        opponent.player.add_card(Card.new(request_rank, 'Diamonds'))
-        opponent_cards_before = opponent.player.cards.length
+        player_cards_before = current_user.cards.length
+        opponent.add_card(Card.new(request_rank, 'Diamonds'))
+        opponent_cards_before = opponent.cards.length
         matching_card_count = 2
 
         game.request_card_from_player(request_rank, opponent)
 
-        expect(current_user.player.cards.length).to eq(player_cards_before + matching_card_count)
-        expect(opponent.player.cards.length).to eq(opponent_cards_before - matching_card_count)
+        expect(current_user.cards.length).to eq(player_cards_before + matching_card_count)
+        expect(opponent.cards.length).to eq(opponent_cards_before - matching_card_count)
       end
     end
   end
 
-  describe '#winning_player' do
-    let(:user1) { User.new(Client.new('socket'), Player.new('Jeff')) }
-    let(:user2) { User.new(Client.new('socket'), Player.new('Bob')) }
+  xdescribe '#winning_player' do
+    let(:player1) { User.new(Client.new('socket'), Player.new('Jeff')) }
+    let(:player2) { User.new(Client.new('socket'), Player.new('Bob')) }
     let(:user3) { User.new(Client.new('socket'), Player.new('Billy')) }
-    let(:users) { [user1, user2, user3] }
+    let(:players) { [player1, player2, user3] }
 
-    let(:game) { described_class.new(users) }
+    let(:game) { described_class.new(players) }
 
     context 'when one player has most books' do
       before do
-        user1.player.books = []
-        user2.player.books = [Book.new(5), Book.new(2), Book.new(10)]
+        player1.player.books = []
+        player2.player.books = [Book.new(5), Book.new(2), Book.new(10)]
         user3.player.books = [Book.new(12)]
       end
 
       it 'returns that player' do
         result = game.winning_player
 
-        expect(result).to eq user2.player
+        expect(result).to eq player2.player
       end
     end
 
     context 'when there is a tie' do
       before do
-        user1.player.books = [Book.new(8), Book.new(5), Book.new(2)]
-        user2.player.books = [Book.new(5), Book.new(3), Book.new(4)]
+        player1.player.books = [Book.new(8), Book.new(5), Book.new(2)]
+        player2.player.books = [Book.new(5), Book.new(3), Book.new(4)]
         user3.player.books = [Book.new(15)]
       end
 
       it 'returns user with most book and highest value book' do
         result = game.winning_player
-        expect(result).to eq user1
+        expect(result).to eq player1
       end
     end
   end

@@ -273,6 +273,20 @@ describe GoFishRoom do
           it 'does not show invalid message' do
             expect(client1.capture_output).to_not match(/invalid/i)
           end
+
+          it 'preforms the move' do
+            expect(room.game.current_player.cards).not_to eq cards_before
+          end
+
+          it 'shows move result to all players' do
+            client1_result = client1.capture_output
+            client2_result = client2.capture_output
+            client3_result = client3.capture_output
+
+            expect(client1_result).to match(/you.*#{valid_rank}.*#{player2_name}/i)
+            expect(client2_result).to match(/#{player1_name}.*#{valid_rank}.*you/i)
+            expect(client3_result).to match(/#{player1_name}.*#{valid_rank}.*#{player2_name}/i)
+          end
         end
       end
     end
