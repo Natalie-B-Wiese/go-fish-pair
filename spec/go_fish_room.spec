@@ -76,5 +76,16 @@ describe GoFishRoom do
       expect(client2.capture_output).to match(/#{player1_name}'s turn/)
       expect(client3.capture_output).to match(/#{player1_name}'s turn/)
     end
+
+    it 'shows all clients whose turn it is only once' do
+      client1.capture_output
+      client2.capture_output
+      client3.capture_output
+      room.play_round
+
+      expect(client1.capture_output).to_not match(/your turn/)
+      expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
+      expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
+    end
   end
 end
