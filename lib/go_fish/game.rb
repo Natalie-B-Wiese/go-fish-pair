@@ -24,6 +24,15 @@ class Game
     players[current_player_index]
   end
 
+  # the player currently in the lead
+  def winning_player
+    winning_players = players_with_most_books
+
+    return winning_players[0] if winning_players.length == 1
+
+    player_with_biggest_value_book(winning_players)
+  end
+
   def start
     deck.shuffle
     if players.length <= 3
@@ -33,10 +42,6 @@ class Game
     end
   end
 
-  # play_turn (player, rank:, opponent:)
-  # play_turn (player, opponent: someone, rank: 'A')
-  # TODO: make it return a round result object
-  # TODO: make play_turn take parameters for collect_rank and collect_player from room
   def play_turn(rank:, opponent:)
     cards_taken_from_opponent = opponent.take_cards_with_rank(rank)
     turn_result = TurnResult.new(current_player: current_player, opponent_player: opponent, rank_requested: rank,
@@ -81,41 +86,17 @@ class Game
     end
   end
 
-  def log_request(rank, opponent)
-    current_user.client.puts_socket("You requested a #{rank} from #{opponent.name}")
-    all_but_current_user.each do |user|
-      if user == opponent
-        user.client.puts_socket("#{current_player.name} requested a #{rank} from you")
-      else
-        user.client.puts_socket("#{current_player.name} requested a #{rank} from #{opponent.name}")
-      end
-    end
-  end
-
-  def log_give(opponent, num_cards_given)
-    users.each do |user|
-      user.client.puts_socket("#{opponent.name} gave #{num_cards_given} cards to #{current_player.name}")
-    end
-  end
-
-  def all_but_current_player_names
-    all_but_current_client.map(&:name)
-  end
-
-  def winning_player
-    winning_players = players_with_most_books
-
-    return winning_players[0] if winning_players.length == 1
-
-    player_with_biggest_value_book(winning_players)
-  end
-
   def deal_cards_to_players(num_cards_to_deal)
     num_cards_to_deal.times do
       players.each do |player|
         player.add_card(deck.take_top_card)
       end
     end
+  end
+
+  def switch_turn
+    self.current_player_index += 1
+    self.current_player_index = 0 if current_player_index >= players.length
   end
 
   def book_count
@@ -132,18 +113,5 @@ class Game
 
   def most_books
     players.max_by(&:book_count).book_count
-  end
-
-  def player_go_again
-    clients.each(&:reset_variables)
-  end
-
-  def switch_turn
-    self.current_player_index += 1
-    self.current_player_index = 0 if current_player_index >= players.length
-  end
-
-  def go_again?
-    !!go_again
   end
 end
