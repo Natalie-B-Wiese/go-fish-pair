@@ -1,4 +1,4 @@
-require_relative '../lib/card'
+require_relative 'card'
 
 # holds a deck of cards
 class Deck

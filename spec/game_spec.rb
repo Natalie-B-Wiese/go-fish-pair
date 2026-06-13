@@ -1,9 +1,9 @@
-require_relative '../lib/game'
+require_relative '../lib/go_fish/game'
 require_relative '../lib/deck'
 require_relative '../lib/card'
 require_relative '../lib/user'
 require_relative '../lib/client'
-require_relative '../lib/player'
+require_relative '../lib/go_fish/player'
 require_relative '../lib/socket_server'
 require_relative 'mock_socket_client'
 

@@ -1,5 +1,5 @@
-require_relative 'deck'
-require_relative 'input'
+require_relative '../deck'
+require_relative '../input'
 
 class Game
   SMALL_GAME_CARDS = 7

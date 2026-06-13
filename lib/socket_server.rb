@@ -1,7 +1,8 @@
 require 'socket'
 require_relative 'client'
 require_relative 'room'
-require_relative 'player'
+require_relative 'go_fish/player'
+require_relative 'go_fish/go_fish_room'
 require_relative 'user'
 
 class SocketServer
@@ -55,15 +56,7 @@ class SocketServer
   end
 
   def run_games
-    rooms.each { |room| run_room_if_possible(room) }
-  end
-
-  def run_room_if_possible(room)
-    if room.started?
-      room.run_round
-    elsif room.full?
-      room.start_game
-    end
+    rooms.each(&:run_room_if_possible)
   end
 
   private
@@ -72,7 +65,7 @@ class SocketServer
   def handle_pending_hosts(host_clients)
     host_clients.each do |client|
       user = User.new(client, Player.new(client.name))
-      rooms.push(Room.new(user))
+      rooms.push(GoFishRoom.new(user))
     end
   end
 

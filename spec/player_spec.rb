@@ -1,4 +1,4 @@
-require_relative '../lib/player'
+require_relative '../lib/go_fish/player'
 require_relative '../lib/card'
 
 describe Player do

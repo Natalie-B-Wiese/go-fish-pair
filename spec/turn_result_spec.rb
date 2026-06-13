@@ -1,5 +1,5 @@
-require_relative '../lib/turn_result'
-require_relative '../lib/player'
+require_relative '../lib/go_fish/turn_result'
+require_relative '../lib/go_fish/player'
 require_relative '../lib/card'
 
 # initialize(current_player:, opponent_player: nil, rank_requested: nil,

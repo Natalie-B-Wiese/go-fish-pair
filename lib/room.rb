@@ -1,6 +1,3 @@
-require_relative 'game'
-require_relative 'player'
-
 # manages a single Go Fish game and all humans joined on that game
 class Room
   attr_reader :users, :capacity
@@ -36,28 +33,40 @@ class Room
     users.first
   end
 
-  def started?
-    !game.nil?
-  end
-
   def full?
     capacity == num_players
   end
 
-  def start_game
-    self.game = Game.new(users)
-    game.start
-  end
-
-  def run_round
-    return unless started?
-
-    # return if game won
-
-    game.play_turn
+  def run_room_if_possible
+    # TODO: handle game won
+    if started?
+      run_started_game
+    elsif full?
+      start_game
+    else
+      # room does not have enough players
+    end
   end
 
   private
+
+  def new_game
+    raise NotImplementedError('Return a new Game object')
+  end
+
+  # a looping method
+  def run_started_game
+    raise NotImplementedError('A looping method to run a game')
+  end
+
+  def start_game
+    self.game = new_game
+    game.start
+  end
+
+  def started?
+    !game.nil?
+  end
 
   def puts_to_all_players(message)
     users.each do |user|
