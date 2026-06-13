@@ -14,7 +14,6 @@ class Game
     @players = players
     @deck = Deck.new
     @current_player_index = 0
-    reset
   end
 
   def game_over?
@@ -38,7 +37,22 @@ class Game
   # play_turn (player, opponent: someone, rank: 'A')
   # TODO: make it return a round result object
   # TODO: make play_turn take parameters for collect_rank and collect_player from room
-  def play_turn(rank:, opponent_player:)
+  def play_turn(rank:, opponent:)
+    cards_taken_from_opponent = opponent.take_cards_with_rank(rank)
+    turn_result = TurnResult.new(current_player: current_player, opponent_player: opponent, rank_requested: rank,
+                                 cards_received_opponent: cards_taken_from_opponent)
+
+    if cards_taken_from_opponent.empty?
+      # request_deck_card(rank, turn_result)
+    else
+      current_player.add_cards(cards_taken_from_opponent)
+      book_made = current_player.try_make_book(rank)
+      turn_result.was_book_made = true if book_made
+    end
+
+    switch_turn unless turn_result.go_again?
+
+    turn_result
   end
 
   def opponent_options_s
@@ -66,20 +80,6 @@ class Game
 
       # prevent it from switching turns
       go_again == true if card_taken.rank == rank
-    end
-  end
-
-  # rank and player_name should be validated before this is called
-  # This can be private since it is only called by this class
-  def request_card_from_user(rank, user)
-    log_request(rank, user)
-    cards_taken = user.player.take_cards_with_rank(rank)
-    log_give(user, cards_taken.length)
-
-    if cards_taken.empty?
-      request_deck_card(rank)
-    else
-      current_player.add_cards(cards_taken)
     end
   end
 

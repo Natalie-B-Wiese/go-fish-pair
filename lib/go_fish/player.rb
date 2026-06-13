@@ -54,12 +54,6 @@ class Player
     value
   end
 
-  private
-
-  def cards_with_rank(rank)
-    cards.select { |card| card.rank == rank }
-  end
-
   def try_make_book(rank)
     cards_in_book = cards_with_rank(rank)
     return nil unless cards_in_book.length == Book::SIZE
@@ -69,5 +63,11 @@ class Player
     book = Book.new(value)
     books.push(book)
     book
+  end
+
+  private
+
+  def cards_with_rank(rank)
+    cards.select { |card| card.rank == rank }
   end
 end
