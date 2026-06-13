@@ -2,6 +2,7 @@ require 'socket'
 require_relative '../lib/socket_server'
 require_relative 'mock_socket_client'
 require_relative '../lib/client'
+require_relative '../lib/go_fish/game'
 
 describe Room do
   let!(:server) { SocketServer.new }
@@ -9,6 +10,13 @@ describe Room do
   before(:each) do
     server.start
     sleep 0.1 # Ensure server is ready for clients
+
+    # surpress not implemented errors
+    allow_any_instance_of(Room).to receive(:new_game).and_return(Game.new([]))
+    allow_any_instance_of(Room).to receive(:run_started_game)
+    allow_any_instance_of(Room).to receive(:starting_message).and_return('starting')
+
+    allow_any_instance_of(Game).to receive(:start).and_return(true)
   end
 
   after(:each) do
@@ -37,14 +45,15 @@ describe Room do
     User.new(real_client, Player.new(name))
   end
 
-  describe '#add_user' do
-    let(:room_id) { '0123' }
-    let!(:client1) { create_and_accept_new_client }
-    let(:player1_name) { 'Bob' }
-    let(:player2_name) { 'Jeff' }
-    let(:player3_name) { 'Batman' }
+  let(:room_id) { '0123' }
+  let(:player1_name) { 'Bob' }
+  let(:player2_name) { 'Jeff' }
+  let(:player3_name) { 'Batman' }
+  let(:capacity) { 3 }
 
-    let(:capacity) { 3 }
+  describe '#add_user' do
+    let!(:client1) { create_and_accept_new_client }
+
     let!(:room) do
       Room.new(create_user(player1_name), capacity: capacity, id: room_id)
     end
@@ -134,6 +143,85 @@ describe Room do
           expect(client2.capture_output).to match(/all/i)
           expect(client3.capture_output).to match(/all/i)
         end
+      end
+    end
+  end
+
+  describe '#run_room_if_possible' do
+    let(:starting_regex) { /starting/i }
+
+    let!(:client1) { create_and_accept_new_client }
+    let!(:client2) { create_and_accept_new_client }
+    let!(:client3) { create_and_accept_new_client }
+
+    context 'when room is not full' do
+      let!(:unfull_room) do
+        Room.new(create_user(player1_name), capacity: capacity, id: room_id)
+      end
+
+      before do
+        client1.capture_output
+        client2.capture_output
+        client3.capture_output
+        unfull_room.run_room_if_possible
+      end
+
+      it 'does not create or start a game' do
+        expect(unfull_room.game).to be_nil
+        expect(client1.capture_output).to_not match(starting_regex)
+      end
+    end
+
+    context 'when room is full but not started' do
+      let!(:unstarted_room) do
+        Room.new(create_user(player1_name), capacity: capacity, id: room_id)
+      end
+
+      before do
+        unstarted_room.add_user(create_user(player2_name))
+        unstarted_room.add_user(create_user(player3_name))
+        client1.capture_output
+        client2.capture_output
+        client3.capture_output
+      end
+
+      it 'shows starting message to all users' do
+        unstarted_room.run_room_if_possible
+
+        expect(client1.capture_output).to match(starting_regex)
+        expect(client2.capture_output).to match(starting_regex)
+        expect(client3.capture_output).to match(starting_regex)
+      end
+
+      it 'creates a new game' do
+        unstarted_room.run_room_if_possible
+
+        expect(unstarted_room.game).to_not be_nil
+      end
+
+      it 'starts the game' do
+        expect_any_instance_of(Game).to receive(:start)
+        unstarted_room.run_room_if_possible
+      end
+    end
+
+    context 'when room is full and started' do
+      let!(:room) do
+        Room.new(create_user(player1_name), capacity: capacity, id: room_id)
+      end
+
+      before do
+        room.add_user(create_user(player2_name))
+        room.add_user(create_user(player3_name))
+        client1.capture_output
+        client2.capture_output
+        client3.capture_output
+        room.start_game
+      end
+
+      it 'calls #run_started_game' do
+        expect(room).to receive(:run_started_game)
+        room.run_room_if_possible
       end
     end
   end

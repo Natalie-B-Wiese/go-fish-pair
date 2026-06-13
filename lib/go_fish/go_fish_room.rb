@@ -2,14 +2,16 @@ require_relative '../room'
 require_relative 'game'
 
 class GoFishRoom < Room
-  # other stuff
-  #
-
-  private
-
-  # a looping method
   def run_started_game
-    raise NotImplementedError('A looping method to run a game')
+    play_round until game.game_over?
+  end
+
+  def starting_message
+    'Go Fish is starting!'
+  end
+
+  def play_round
+    result = game.play_turn
   end
 
   def new_game

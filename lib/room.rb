@@ -48,21 +48,26 @@ class Room
     end
   end
 
-  private
+  def start_game
+    self.game = new_game
+    puts_to_all_players(starting_message)
+    game.start
+  end
 
   def new_game
-    raise NotImplementedError('Return a new Game object')
+    raise NotImplementedError
+  end
+
+  def starting_message
+    raise NotImplementedError
   end
 
   # a looping method
   def run_started_game
-    raise NotImplementedError('A looping method to run a game')
+    raise NotImplementedError
   end
 
-  def start_game
-    self.game = new_game
-    game.start
-  end
+  private
 
   def started?
     !game.nil?
