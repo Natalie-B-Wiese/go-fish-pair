@@ -17,6 +17,32 @@ class Game
     reset
   end
 
+  def game_over?
+    book_count == (Card::SUITS * Card::RANKS) / Book::SIZE
+  end
+
+  def current_player
+    players[current_player_index]
+  end
+
+  def start
+    deck.shuffle
+    if users.length <= 3
+      deal_cards_to_players(SMALL_GAME_CARDS)
+    else
+      deal_cards_to_players(BIG_GAME_CARDS)
+    end
+  end
+
+  # play_turn (player, rank:, opponent:)
+  # play_turn (player, opponent: someone, rank: 'A')
+  # TODO: make it return a round result object
+  # TODO: make play_turn take parameters for collect_rank and collect_player from room
+  def play_turn
+  end
+
+  private
+
   def reset
     @inputs = {
       rank: Input.new,
@@ -32,17 +58,6 @@ class Game
 
   def players
     @users.map(&:player)
-  end
-
-  def start
-    deck.shuffle
-    if users.length <= 3
-      deal_cards_to_players(SMALL_GAME_CARDS)
-    else
-      deal_cards_to_players(BIG_GAME_CARDS)
-    end
-
-    starting_announcement
   end
 
   def request_deck_card(rank)
@@ -67,7 +82,7 @@ class Game
   # play_turn (player, opponent: someone, rank: 'A')
   # TODO: make it return a round result object
   # TODO: make play_turn take parameters for collect_rank and collect_player from room
-  def play_turn
+  def play_turn_old
     print_round unless shown_hand?
     self.shown_hand = true
 
@@ -124,10 +139,6 @@ class Game
     clients[current_player_index]
   end
 
-  def current_player
-    players[current_player_index]
-  end
-
   # used by player
   def all_but_current_client
     clients - [current_client]
@@ -135,10 +146,6 @@ class Game
 
   def all_but_current_player_names
     all_but_current_client.map(&:name)
-  end
-
-  def game_over?
-    book_count == (Card::SUITS * Card::RANKS) / Book::SIZE
   end
 
   def winning_player
@@ -213,12 +220,6 @@ class Game
     end
   end
 
-  def starting_announcement
-    clients.each do |client|
-      client.puts_socket('Game is starting!')
-    end
-  end
-
   def deal_cards_to_players(num_cards_to_deal)
     num_cards_to_deal.times do
       players.each do |player|
@@ -255,16 +256,6 @@ class Game
   def show_cards
     users.each do |user|
       user.client.puts_socket(user.player.cards_to_s)
-    end
-  end
-
-  def show_whose_turn
-    users.each do |user|
-      if user == current_user
-        user.client.puts_socket('It is your turn')
-      else
-        user.client.puts_socket("It is #{current_player.name}'s turn")
-      end
     end
   end
 

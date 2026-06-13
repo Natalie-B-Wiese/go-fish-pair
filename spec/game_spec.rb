@@ -47,15 +47,6 @@ describe Game do
   describe '#start' do
     # shuffles a deck
     # deals the deck to the players
-    it 'shows starting message to all players' do
-      users = [user1, user2]
-      game = Game.new(users)
-
-      game.start
-
-      expect(client1.capture_output).to match(/starting/i)
-      expect(client2.capture_output).to match(/starting/i)
-    end
 
     context 'with 2 or 3 players' do
       let(:users) { [user1, user2] }
