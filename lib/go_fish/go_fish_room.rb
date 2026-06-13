@@ -25,6 +25,10 @@ class GoFishRoom < Room
     collect_rank unless inputs[:rank].value
     return unless inputs[:rank].value
 
+    # collect opponent
+    collect_opponent unless inputs[:opponent].value
+    return unless inputs[:opponent].value
+
     result = game.play_turn
   end
 
@@ -37,7 +41,8 @@ class GoFishRoom < Room
   def reset
     @round_progress = 0
     @inputs = {
-      rank: Input.new
+      rank: Input.new,
+      opponent: Input.new
     }
   end
 
@@ -90,6 +95,33 @@ class GoFishRoom < Room
     else
       current_client.puts_socket('Invalid rank!')
       inputs[:rank].unsend
+    end
+  end
+
+  def collect_opponent
+    unless inputs[:opponent].sent?
+      current_client.puts_socket(game.opponent_options_s)
+      current_user.client.ask_socket('Enter player id')
+    end
+
+    inputs[:opponent].send
+
+    input = current_user.client.read_socket
+    return if input.empty?
+
+    input = input.chomp.to_i
+
+    opponent = users[input - 1]
+
+    # check if it is valid
+    if opponent.nil? || opponent == current_user
+      current_client.puts_socket('Invalid player id!')
+      inputs[:opponent].unsend
+    elsif opponent.player.out_of_cards?
+      current_client.puts_socket('That player is out of cards!')
+      inputs[:opponent].unsend
+    else
+      inputs[:opponent].value = opponent
     end
   end
 end

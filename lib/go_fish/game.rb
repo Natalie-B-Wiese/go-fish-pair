@@ -41,6 +41,17 @@ class Game
   def play_turn
   end
 
+  def opponent_options_s
+    opponents_with_id_array = []
+    users.each_with_index do |user, index|
+      next if index == current_player_index
+
+      opponents_with_id_array.push((index + 1).to_s + ': ' + user.player.name)
+    end
+
+    opponents_with_id_array.join(', ')
+  end
+
   private
 
   def reset
@@ -134,7 +145,6 @@ class Game
     clients[current_player_index]
   end
 
-  # used by player
   def all_but_current_client
     clients - [current_client]
   end
@@ -158,43 +168,8 @@ class Game
     users[id - 1]
   end
 
-  def show_opponent_options
-    players_with_id = []
-    users.each_with_index do |user, index|
-      players_with_id.push((index + 1).to_s + ': ' + user.player.name)
-    end
-
-    # exclude self from this list
-    players_with_id.delete_at(current_player_index)
-    current_user.client.puts_socket(players_with_id.join(', '))
-  end
-
   def all_but_current_user
     users - [current_user]
-  end
-
-  def collect_player
-    unless inputs[:player].sent?
-      show_opponent_options
-      current_user.client.ask_socket('Enter player id')
-    end
-
-    inputs[:player].send
-
-    input = current_user.client.read_socket
-    return if input.empty?
-
-    input = input.chomp.to_i
-
-    opponent = user_by_id(input)
-
-    # check if it is valid
-    if opponent && opponent != current_user
-      inputs[:player].value = opponent
-    else
-      current_user.client.puts_socket('Invalid player id!')
-      inputs[:player].unsend
-    end
   end
 
   def deal_cards_to_players(num_cards_to_deal)

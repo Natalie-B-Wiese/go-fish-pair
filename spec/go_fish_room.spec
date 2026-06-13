@@ -162,6 +162,119 @@ describe GoFishRoom do
           end
         end
       end
+
+      context 'after getting valid rank' do
+        let(:valid_rank) { 'A' }
+        before do
+          room.game.current_player.cards = [Card.new('A', 'Spades')]
+          client1.provide_input(valid_rank)
+          client1.capture_output
+
+          room.play_round
+        end
+
+        it 'shows player 1 a list of users and ids to request from excluding self' do
+          result = client1.capture_output
+          expect(result).to match(/2: #{player2_name}/)
+          expect(result).to match(/3: #{player3_name}/)
+        end
+
+        it 'does not show the list of players to the other players' do
+          expect(client2.capture_output).to_not match(/3:#{player3_name}/)
+          expect(client3.capture_output).to_not match(/2:#{player2_name}/)
+        end
+
+        it 'asks current player for a player id' do
+          expect(client1.capture_output).to match(question_regex(/player/))
+        end
+
+        it 'does not ask other players for a player id' do
+          expect(client2.capture_output).to_not match(question_regex(/player/))
+          expect(client3.capture_output).to_not match(question_regex(/player/))
+        end
+
+        it 'will not ask again until user provided an input' do
+          client1.capture_output
+          room.play_round
+          expect(client1.capture_output).not_to match(question_regex(/player/))
+        end
+
+        context 'when player id is own player id' do
+          before do
+            own_player_id = '1'
+            client1.provide_input(own_player_id)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'shows invalid message' do
+            expect(client1.capture_output).to match(/invalid/i)
+          end
+
+          it 'will ask for player again on next run' do
+            room.play_round
+            expect(client1.capture_output).to match(question_regex(/player/))
+          end
+        end
+
+        context 'when player with that id does not exist' do
+          before do
+            invalid_player_id = '30'
+            client1.provide_input(invalid_player_id)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'shows invalid message' do
+            expect(client1.capture_output).to match(/invalid/i)
+          end
+
+          it 'will ask for player again on next run' do
+            room.play_round
+            expect(client1.capture_output).to match(question_regex(/player/))
+          end
+        end
+
+        context 'when player with that id exists but is out of cards' do
+          before do
+            player_index_without_cards = 1
+            room.users[player_index_without_cards].player.cards = []
+
+            out_of_cards_player_id = (player_index_without_cards + 1).to_s
+
+            client1.provide_input(out_of_cards_player_id)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'shows out of cards message' do
+            expect(client1.capture_output).to match(/cards/i)
+          end
+
+          it 'will ask for player again on next run' do
+            room.play_round
+            expect(client1.capture_output).to match(question_regex(/player/))
+          end
+        end
+
+        context 'when current player provides valid opponent id' do
+          let!(:cards_before) { room.game.current_player.cards }
+          before do
+            valid_player_id = '2'
+            client1.provide_input(valid_player_id)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'does not show invalid message' do
+            expect(client1.capture_output).to_not match(/invalid/i)
+          end
+        end
+      end
     end
   end
 end

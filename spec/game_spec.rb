@@ -111,45 +111,6 @@ describe Game do
 
         game.play_turn
       end
-
-      it 'does not ask for rank' do
-        game.play_turn
-        expect(client1.capture_output).to_not match(question_regex(/rank/))
-      end
-
-      it 'shows a list of users and ids to request from exluding self' do
-        result = client1.capture_output
-        expect(result).to match(/"2: #{player2_name}"/)
-      end
-
-      it 'asks for a player id' do
-        expect(client1.capture_output).to match(question_regex(/player/))
-      end
-
-      it 'asks for player id only once' do
-        client1.capture_output
-        game.play_turn
-        expect(client1.capture_output).not_to match(question_regex(/player/))
-      end
-
-      context 'when player id is invalid' do
-        before do
-          invalid_player_id = '1'
-          client1.provide_input(invalid_player_id)
-          client1.capture_output
-
-          game.play_turn
-        end
-
-        it 'shows invalid message' do
-          expect(client1.capture_output).to match(/invalid/i)
-        end
-
-        it 'will ask for player again on next run' do
-          game.play_turn
-          expect(client1.capture_output).to match(question_regex(/player/))
-        end
-      end
     end
 
     context 'when current player has chosen a valid rank and opponent' do
