@@ -322,6 +322,32 @@ describe Game do
         end
       end
     end
+
+    context 'when go fish and deck empty' do
+      let(:opponent) { player2 }
+      let(:rank) { 'A' }
+
+      before do
+        opponent.cards = [Card.new('8', 'Diamonds')]
+        player1.cards = [Card.new(rank, 'Hearts')]
+        game.deck.cards = []
+      end
+      it 'returns the correct turn result' do
+        result = game.play_turn(rank: rank, opponent: opponent)
+        expect(result.current_player).to eq player1
+        expect(result.opponent_player).to eq opponent
+        expect(result.rank_requested).to eq rank
+        expect(result.cards_received_opponent).to be_empty
+        expect(result.card_received_deck).to be_nil
+        expect(result.was_book_made).to eq false
+        expect(result.go_again?).to eq false
+      end
+
+      it 'switches turns' do
+        game.play_turn(rank: rank, opponent: opponent)
+        expect(game.current_player).to eq player2
+      end
+    end
   end
 
   xdescribe '#request_deck_card' do
