@@ -45,7 +45,6 @@ class Game
 
   def reset
     @inputs = {
-      rank: Input.new,
       player: Input.new
     }
     @go_again = false
@@ -172,24 +171,6 @@ class Game
 
   def all_but_current_user
     users - [current_user]
-  end
-
-  def collect_rank
-    current_user.client.ask_socket('Enter rank') unless inputs[:rank].sent?
-    inputs[:rank].send
-
-    input = current_user.client.read_socket
-    return if input.empty?
-
-    input = input.chomp
-
-    # check if it is valid
-    if current_user.player.includes_card_with_rank?(input)
-      inputs[:rank].value = input
-    else
-      current_user.client.puts_socket('Invalid rank!')
-      inputs[:rank].unsend
-    end
   end
 
   def collect_player

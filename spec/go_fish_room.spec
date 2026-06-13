@@ -75,21 +75,6 @@ describe GoFishRoom do
       room.play_round
     end
 
-    it 'shows all clients whose turn it is' do
-      expect(client1.capture_output).to match(/your turn/)
-      expect(client2.capture_output).to match(/#{player1_name}'s turn/)
-      expect(client3.capture_output).to match(/#{player1_name}'s turn/)
-    end
-
-    it 'shows all clients whose turn it is only once' do
-      clear_clients_output
-      room.play_round
-
-      expect(client1.capture_output).to_not match(/your turn/)
-      expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
-      expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
-    end
-
     it 'shows all players their hand' do
       expect(client1.capture_output).to match(/of/i)
       expect(client2.capture_output).to match(/of/i)
@@ -101,6 +86,82 @@ describe GoFishRoom do
 
       expect(client1.capture_output).to_not match(/of/i)
       expect(client2.capture_output).to_not match(/of/i)
+    end
+
+    context 'on first round' do
+      it 'shows all clients whose turn it is' do
+        expect(client1.capture_output).to match(/your turn/)
+        expect(client2.capture_output).to match(/#{player1_name}'s turn/)
+        expect(client3.capture_output).to match(/#{player1_name}'s turn/)
+      end
+
+      it 'shows all clients whose turn it is only once' do
+        clear_clients_output
+        room.play_round
+
+        expect(client1.capture_output).to_not match(/your turn/)
+        expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
+        expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
+      end
+
+      context 'before getting valid rank' do
+        it 'asks player 1 for a rank' do
+          expect(client1.capture_output).to match(question_regex(/rank/))
+        end
+
+        it 'does not ask other players for a rank' do
+          expect(client2.capture_output).to_not match(question_regex(/rank/))
+          expect(client3.capture_output).to_not match(question_regex(/rank/))
+        end
+
+        it 'it will not ask rank again until user provided input' do
+          client1.capture_output
+          room.play_round
+          expect(client1.capture_output).not_to match(question_regex(/rank/))
+        end
+
+        context 'when current player provides rank they do not have' do
+          before do
+            room.game.current_player.cards = [Card.new('A', 'Spades')]
+            rank_not_have = '2'
+            client1.provide_input(rank_not_have)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'shows invalid message' do
+            expect(client1.capture_output).to match(/invalid/i)
+          end
+
+          it 'will ask for rank again on next run' do
+            clear_clients_output
+            room.play_round
+            expect(client1.capture_output).to match(question_regex(/rank/))
+          end
+        end
+
+        context 'when current player provides rank they have' do
+          before do
+            room.game.current_player.cards = [Card.new('A', 'Spades')]
+            rank_have = 'A'
+            client1.provide_input(rank_have)
+            client1.capture_output
+
+            room.play_round
+          end
+
+          it 'does not show invalid message' do
+            expect(client1.capture_output).to_not match(/invalid/i)
+          end
+
+          it 'will not ask for rank again on next run' do
+            clear_clients_output
+            room.play_round
+            expect(client1.capture_output).to_not match(question_regex(/rank/))
+          end
+        end
+      end
     end
   end
 end

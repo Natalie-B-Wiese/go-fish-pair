@@ -103,35 +103,6 @@ describe Game do
       game.play_turn
     end
 
-    it 'asks current player for a rank' do
-      expect(client1.capture_output).to match(question_regex(/rank/))
-    end
-
-    it 'asks for rank only once' do
-      client1.capture_output
-      game.play_turn
-      expect(client1.capture_output).not_to match(question_regex(/rank/))
-    end
-
-    context 'when current player provides rank they do not have' do
-      before do
-        rank_not_have = '2'
-        client1.provide_input(rank_not_have)
-        client1.capture_output
-
-        game.play_turn
-      end
-
-      it 'shows invalid message' do
-        expect(client1.capture_output).to match(/invalid/i)
-      end
-
-      it 'will ask for rank again on next run' do
-        game.play_turn
-        expect(client1.capture_output).to match(question_regex(/rank/))
-      end
-    end
-
     context 'when current player provides a rank they have' do
       before do
         rank_have = 'A'
