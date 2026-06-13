@@ -55,14 +55,18 @@ describe GoFishRoom do
     GoFishRoom.new(create_user(player1_name), capacity: capacity, id: room_id)
   end
 
+  def clear_clients_output
+    client1.capture_output
+    client2.capture_output
+    client3.capture_output
+  end
+
   before do
     room.add_user(create_user(player2_name))
     room.add_user(create_user(player3_name))
     room.start_game
 
-    client1.capture_output
-    client2.capture_output
-    client3.capture_output
+    clear_clients_output
   end
 
   # run_room_if_possible
@@ -78,14 +82,25 @@ describe GoFishRoom do
     end
 
     it 'shows all clients whose turn it is only once' do
-      client1.capture_output
-      client2.capture_output
-      client3.capture_output
+      clear_clients_output
       room.play_round
 
       expect(client1.capture_output).to_not match(/your turn/)
       expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
       expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
+    end
+
+    it 'shows all players their hand' do
+      expect(client1.capture_output).to match(/of/i)
+      expect(client2.capture_output).to match(/of/i)
+    end
+
+    it 'shows all players their hand only once' do
+      clear_clients_output
+      room.play_round
+
+      expect(client1.capture_output).to_not match(/of/i)
+      expect(client2.capture_output).to_not match(/of/i)
     end
   end
 end

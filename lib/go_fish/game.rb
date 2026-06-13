@@ -8,7 +8,7 @@ class Game
 
   attr_reader :users, :deck, :inputs
 
-  attr_accessor :current_player_index, :shown_hand, :go_again
+  attr_accessor :current_player_index, :go_again
 
   def initialize(users)
     @users = users
@@ -48,7 +48,6 @@ class Game
       rank: Input.new,
       player: Input.new
     }
-    @shown_hand = false
     @go_again = false
   end
 
@@ -83,9 +82,6 @@ class Game
   # TODO: make it return a round result object
   # TODO: make play_turn take parameters for collect_rank and collect_player from room
   def play_turn_old
-    print_round unless shown_hand?
-    self.shown_hand = true
-
     # get ranks
     collect_rank unless inputs[:rank].value
     return unless inputs[:rank].value
@@ -248,17 +244,6 @@ class Game
     clients.each(&:reset_variables)
   end
 
-  def print_round
-    show_cards
-    show_whose_turn
-  end
-
-  def show_cards
-    users.each do |user|
-      user.client.puts_socket(user.player.cards_to_s)
-    end
-  end
-
   def find_player_by_name(name)
     players_with_name = players.select { |player| player.name == name }
     players_with_name[0]
@@ -271,10 +256,6 @@ class Game
 
   def current_user
     users[current_player_index]
-  end
-
-  def shown_hand?
-    !!shown_hand
   end
 
   def go_again?
