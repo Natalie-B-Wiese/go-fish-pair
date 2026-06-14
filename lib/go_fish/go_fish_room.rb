@@ -21,6 +21,11 @@ class GoFishRoom < Room
   def play_round
     print_round_start if round_progress == 0
 
+    if game.current_player.out_of_cards?
+      result = game.request_deck_card
+      puts_turn_result_to_all_clients(result)
+    end
+
     # get ranks
     collect_rank unless inputs[:rank].value
     return unless inputs[:rank].value
@@ -30,9 +35,7 @@ class GoFishRoom < Room
     return unless inputs[:opponent].value
 
     result = game.play_turn(rank: inputs[:rank].value, opponent: inputs[:opponent].value.player)
-    users.each do |user|
-      user.client.puts_socket(result.message(user.player))
-    end
+    puts_turn_result_to_all_clients(result)
   end
 
   def new_game
@@ -40,6 +43,12 @@ class GoFishRoom < Room
   end
 
   private
+
+  def puts_turn_result_to_all_clients(turn_result)
+    users.each do |user|
+      user.client.puts_socket(turn_result.message(user.player))
+    end
+  end
 
   def reset
     @round_progress = 0

@@ -88,7 +88,7 @@ describe GoFishRoom do
       expect(client2.capture_output).to_not match(/of/i)
     end
 
-    context 'on first round' do
+    context 'on first player turn' do
       it 'shows all clients whose turn it is' do
         expect(client1.capture_output).to match(/your turn/)
         expect(client2.capture_output).to match(/#{player1_name}'s turn/)
@@ -103,6 +103,32 @@ describe GoFishRoom do
         expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
         expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
       end
+
+      context 'when player has no cards but deck has cards' do
+        let(:card_taken) { Card.new('5', 'Hearts') }
+        before do
+          room.users[0].player.cards = []
+          room.game.deck.cards = [card_taken]
+          room.play_round
+        end
+
+        it 'player draws from the deck' do
+          expect(room.users[0].player.cards).to include card_taken
+          expect(room.game.deck.cards).to_not include card_taken
+        end
+
+        it 'shows result to all players' do
+          expect(client1.capture_output).to match(/you .* #{card_taken} .* deck/i)
+          expect(client2.capture_output).to match(/#{player1_name} .* a card .* deck/i)
+          expect(client3.capture_output).to match(/#{player1_name} .* a card .* deck/i)
+        end
+
+        it 'player turn continues' do
+          expect(client1.capture_output).to match(question_regex(/rank/))
+        end
+      end
+
+      # TODO: If player is out of cards and there there are no cards left in the stock, they are out of the game.
 
       context 'before getting valid rank' do
         it 'asks player 1 for a rank' do

@@ -14,11 +14,21 @@ class TurnResult
   end
 
   def message(player)
-    if book_made?
-      book_message(player)
+    if player_out_of_cards?
+      if card_received_deck.nil?
+        # TODO: player is out of the game
+      else
+        out_of_cards_draw_from_deck_message(player)
+      end
     else
-      puts 'other'
+      # stuff
     end
+
+    # if book_made?
+    #  book_message(player)
+    # else
+    #  puts 'other'
+    # end
   end
 
   def go_again?
@@ -37,8 +47,20 @@ class TurnResult
 
   private
 
+  def player_out_of_cards?
+    opponent_player.nil?
+  end
+
   def book_message(player)
     "#{player_to_s(player)} made a book with four #{rank_received}s!"
+  end
+
+  def out_of_cards_draw_from_deck_message(player)
+    if player == current_player
+      "You are out of cards. You drew a #{card_received_deck} from the deck."
+    else
+      "#{current_player.name} ran out of cards. #{current_player.name} drew a card from the deck."
+    end
   end
 
   def book_made?
