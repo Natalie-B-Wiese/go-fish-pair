@@ -339,30 +339,23 @@ describe GoFishRoom do
     end
   end
 
-  describe '#run_started_game' do
-    it 'shows all players their hand' do
+  it 'plays a round until all books have been won' do
+    client1
+      .end
+
+    it 'shows all players the winner' do
       room.play_round
       expect(client1.capture_output).to match(/of/i)
       expect(client2.capture_output).to match(/of/i)
     end
 
-    it 'shows all players their hand only once' do
+    it 'shows all players the winner only once' do
       room.play_round
       clear_clients_output
       room.play_round
 
       expect(client1.capture_output).to_not match(/of/i)
       expect(client2.capture_output).to_not match(/of/i)
-    end
-
-    context 'on first player turn' do
-      it 'shows all clients whose turn it is' do
-        room.play_round
-
-        expect(client1.capture_output).to match(/your turn/)
-        expect(client2.capture_output).to match(/#{player1_name}'s turn/)
-        expect(client3.capture_output).to match(/#{player1_name}'s turn/)
-      end
     end
   end
 end

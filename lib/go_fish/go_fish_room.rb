@@ -3,15 +3,20 @@ require_relative 'game'
 require_relative '../input'
 
 class GoFishRoom < Room
-  attr_accessor :round_progress, :inputs
+  attr_accessor :round_progress, :inputs, :winner
 
   def initialize(host_user, capacity: host_user.client.desired_player_count, id: '0000')
     super
+    @winner = nil
     reset
   end
 
   def run_started_game
+    return if winner
+
     play_round until game.game_over?
+    self.winner = game.winning_player
+    print_winner
   end
 
   def starting_message
@@ -80,6 +85,16 @@ class GoFishRoom < Room
     show_cards
     show_whose_turn
     self.round_progress += 1
+  end
+
+  def print_winner
+    users.each do |user|
+      if user.player == winner
+        user.client.puts_socket('You won!')
+      else
+        user.client.puts_socket("#{winner} won!")
+      end
+    end
   end
 
   def show_whose_turn
