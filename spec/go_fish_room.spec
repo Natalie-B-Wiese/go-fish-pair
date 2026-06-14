@@ -71,16 +71,14 @@ describe GoFishRoom do
 
   # run_room_if_possible
   describe '#play_round' do
-    before do
-      room.play_round
-    end
-
     it 'shows all players their hand' do
+      room.play_round
       expect(client1.capture_output).to match(/of/i)
       expect(client2.capture_output).to match(/of/i)
     end
 
     it 'shows all players their hand only once' do
+      room.play_round
       clear_clients_output
       room.play_round
 
@@ -90,12 +88,15 @@ describe GoFishRoom do
 
     context 'on first player turn' do
       it 'shows all clients whose turn it is' do
+        room.play_round
+
         expect(client1.capture_output).to match(/your turn/)
         expect(client2.capture_output).to match(/#{player1_name}'s turn/)
         expect(client3.capture_output).to match(/#{player1_name}'s turn/)
       end
 
       it 'shows all clients whose turn it is only once' do
+        room.play_round
         clear_clients_output
         room.play_round
 
@@ -129,18 +130,39 @@ describe GoFishRoom do
       end
 
       # TODO: If player is out of cards and there there are no cards left in the stock, they are out of the game.
+      context 'when player has no cards and deck is empty' do
+        before do
+          room.users[0].player.cards = []
+          room.game.deck.cards = []
+          room.play_round
+        end
+
+        it 'shows result to all players' do
+          expect(client1.capture_output).to match(/you are out of the game/i)
+          expect(client2.capture_output).to match(/#{player1_name} is out of the game/i)
+          expect(client3.capture_output).to match(/#{player1_name} is out of the game/i)
+        end
+
+        it 'player turn is skipped' do
+          expect(client1.capture_output).to_not match(question_regex(/rank/))
+          expect(client2.capture_output).to match(question_regex(/rank/))
+        end
+      end
 
       context 'before getting valid rank' do
         it 'asks player 1 for a rank' do
+          room.play_round
           expect(client1.capture_output).to match(question_regex(/rank/))
         end
 
         it 'does not ask other players for a rank' do
+          room.play_round
           expect(client2.capture_output).to_not match(question_regex(/rank/))
           expect(client3.capture_output).to_not match(question_regex(/rank/))
         end
 
         it 'it will not ask rank again until user provided input' do
+          room.play_round
           client1.capture_output
           room.play_round
           expect(client1.capture_output).not_to match(question_regex(/rank/))

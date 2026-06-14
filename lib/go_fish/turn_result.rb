@@ -16,7 +16,7 @@ class TurnResult
   def message(player)
     if player_out_of_cards?
       if card_received_deck.nil?
-        # TODO: player is out of the game
+        out_of_game_message(player)
       else
         out_of_cards_draw_from_deck_message(player)
       end
@@ -63,6 +63,11 @@ class TurnResult
     end
   end
 
+  def out_of_game_message(player)
+    "#{player_to_s(player)} ran out of cards and the deck is empty. " +
+      "#{player_to_s(player)} #{is_are(current_player, player)} out of the game"
+  end
+
   def book_made?
     !!was_book_made
   end
@@ -77,6 +82,10 @@ class TurnResult
 
   def player_to_s(you_player, is_subject = true)
     player_variable_to_s(current_player, you_player, is_subject)
+  end
+
+  def is_are(variable_player, you_player)
+    you_player == variable_player ? 'are' : 'is'
   end
 
   def player_variable_to_s(variable_player, you_player, is_subject)

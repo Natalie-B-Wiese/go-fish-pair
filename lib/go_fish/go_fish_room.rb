@@ -24,6 +24,7 @@ class GoFishRoom < Room
     if game.current_player.out_of_cards?
       result = game.request_deck_card
       puts_turn_result_to_all_clients(result)
+      switch_turn if result.card_received_deck.nil?
     end
 
     # get ranks
@@ -43,6 +44,11 @@ class GoFishRoom < Room
   end
 
   private
+
+  def switch_turn
+    game.switch_turn
+    reset
+  end
 
   def puts_turn_result_to_all_clients(turn_result)
     users.each do |user|

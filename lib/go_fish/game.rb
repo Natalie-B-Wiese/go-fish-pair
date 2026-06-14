@@ -84,6 +84,11 @@ class Game
     turn_result
   end
 
+  def switch_turn
+    self.current_player_index += 1
+    self.current_player_index = 0 if current_player_index >= players.length
+  end
+
   private
 
   def deal_cards_to_players(num_cards_to_deal)
@@ -92,11 +97,6 @@ class Game
         player.add_card(deck.take_top_card)
       end
     end
-  end
-
-  def switch_turn
-    self.current_player_index += 1
-    self.current_player_index = 0 if current_player_index >= players.length
   end
 
   def book_count
