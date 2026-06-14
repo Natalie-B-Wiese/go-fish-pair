@@ -350,15 +350,12 @@ describe Game do
     end
   end
 
-  xdescribe '#request_deck_card' do
+  describe '#request_deck_card' do
     let(:players) { [player1, player2] }
 
     let(:game) { described_class.new(players) }
 
-    let(:ace_spades) { Card.new('A', 'Spades') }
-    let(:ace_clubs)  { Card.new('A', 'Clubs') }
-
-    let(:ace_diamonds) { Card.new('A', 'Diamonds') }
+    let(:card_taken) { Card.new('A', 'Spades') }
     let(:other_card) { Card.new('5', 'Spades') }
 
     let(:player1_index) { 0 }
@@ -369,53 +366,74 @@ describe Game do
         game.deck.cards = []
       end
 
-      it 'switches turn' do
-        game.request_deck_card('A')
-        expect(game.current_player_index).to eq player2_index
+      it 'returns the correct turn result' do
+        result = game.request_deck_card
+        expect(result.current_player).to eq player1
+        expect(result.opponent_player).to be_nil
+        expect(result.rank_requested).to be_nil
+        expect(result.cards_received_opponent).to be_empty
+        expect(result.card_received_deck).to be_nil
+        expect(result.was_book_made).to eq false
+        expect(result.go_again?).to eq false
       end
     end
 
-    context 'does not get requested card' do
+    context 'deck has cards' do
       before do
-        player1.add_cards([ace_spades, ace_clubs])
-        game.deck.cards = [other_card, ace_diamonds]
+        game.deck.cards = [card_taken, other_card]
       end
 
       it 'removes the card from the top of the deck' do
-        game.request_deck_card('A')
-        expect(game.deck.cards).to_not include other_card
+        game.request_deck_card
+        expect(game.deck.cards).to_not include card_taken
+        expect(game.deck.cards).to include other_card
       end
 
       it 'gives the card to the player' do
-        game.request_deck_card('A')
-        expect(player1.cards).to include other_card
+        game.request_deck_card
+        expect(player1.cards).to include card_taken
+        expect(player1.cards).to_not include other_card
       end
 
-      it 'switches turn' do
-        game.request_deck_card('A')
-        expect(game.current_player_index).to eq player2_index
+      it 'returns the correct turn result' do
+        result = game.request_deck_card
+        expect(result.current_player).to eq player1
+        expect(result.opponent_player).to be_nil
+        expect(result.rank_requested).to be_nil
+        expect(result.cards_received_opponent).to be_empty
+        expect(result.card_received_deck).to eq card_taken
+        expect(result.was_book_made).to eq false
+        expect(result.go_again?).to eq false
       end
     end
 
-    context 'gets correct card' do
+    context 'when a different player requests a card' do
       before do
-        player1.add_cards([ace_spades, ace_clubs])
-        game.deck.cards = [ace_diamonds, other_card]
+        game.deck.cards = [card_taken, other_card]
+        game.current_player_index = 1
       end
 
       it 'removes the card from the top of the deck' do
-        game.request_deck_card('A')
-        expect(game.deck.cards).to_not include ace_diamonds
+        game.request_deck_card
+        expect(game.deck.cards).to_not include card_taken
+        expect(game.deck.cards).to include other_card
       end
 
       it 'gives the card to the player' do
-        game.request_deck_card('A')
-        expect(player1.cards).to include ace_diamonds
+        game.request_deck_card
+        expect(player2.cards).to include card_taken
+        expect(player2.cards).to_not include other_card
       end
 
-      it 'does not switch turn' do
-        game.request_deck_card('A')
-        expect(game.current_player_index).to eq player1_index
+      it 'returns the correct turn result' do
+        result = game.request_deck_card
+        expect(result.current_player).to eq player2
+        expect(result.opponent_player).to be_nil
+        expect(result.rank_requested).to be_nil
+        expect(result.cards_received_opponent).to be_empty
+        expect(result.card_received_deck).to eq card_taken
+        expect(result.was_book_made).to eq false
+        expect(result.go_again?).to eq false
       end
     end
   end

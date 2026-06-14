@@ -22,7 +22,7 @@ class TurnResult
   end
 
   def go_again?
-    rank_received == rank_requested || was_book_made == true
+    (!rank_received.nil? && rank_received == rank_requested) || was_book_made == true
   end
 
   def rank_received

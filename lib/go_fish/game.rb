@@ -74,17 +74,17 @@ class Game
     opponents_with_id_array.join(', ')
   end
 
-  private
-
-  def request_deck_card(turn_result)
-    if deck.empty?
-      # TODO: deck empty message
-    else
+  def request_deck_card(turn_result = TurnResult.new(current_player: current_player))
+    unless deck.empty?
       card_taken = deck.take_top_card
       turn_result.card_received_deck = card_taken
       current_player.add_card(card_taken)
     end
+
+    turn_result
   end
+
+  private
 
   def deal_cards_to_players(num_cards_to_deal)
     num_cards_to_deal.times do
