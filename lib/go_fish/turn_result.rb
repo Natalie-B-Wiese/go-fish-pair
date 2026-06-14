@@ -15,20 +15,14 @@ class TurnResult
 
   def message(player)
     if player_out_of_cards?
-      if card_received_deck.nil?
-        out_of_game_message(player)
-      else
-        out_of_cards_draw_from_deck_message(player)
-      end
+      out_of_cards_message(player)
     else
-      # stuff
+      string = request_message(player) + give_message(player)
+      string += draw_deck_message(player) if cards_received_opponent.nil?
+      string += book_message(player) if book_made?
+      string += "#{player_to_s(player)} can go again." if go_again?
+      string
     end
-
-    # if book_made?
-    #  book_message(player)
-    # else
-    #  puts 'other'
-    # end
   end
 
   def go_again?
@@ -47,20 +41,40 @@ class TurnResult
 
   private
 
+  def out_of_cards_message(player)
+    if card_received_deck.nil?
+      out_of_game_message(player)
+    else
+      "#{player_to_s(player)} ran out of cards. #{draw_deck_message(player)}."
+    end
+  end
+
   def player_out_of_cards?
     opponent_player.nil?
   end
 
-  def book_message(player)
-    "#{player_to_s(player)} made a book with four #{rank_received}s!"
+  def request_message(player)
+    "#{player_to_s(player)} requested a #{rank_requested} from #{opponent_to_s(player, false)}."
   end
 
-  def out_of_cards_draw_from_deck_message(player)
-    if player == current_player
-      "You are out of cards. You drew a #{card_received_deck} from the deck."
+  def give_message(player)
+    card_word = 'card'
+    card_word += 's' unless cards_received_opponent.length == 1
+    "#{opponent_to_s(player)} gave #{cards_received_opponent.length} #{card_word} to #{player_to_s(player, false)}."
+  end
+
+  def draw_deck_message(player)
+    if card_received_deck.nil?
+      "#{current_player.name} tried to fish, but the deck was empty."
+    elsif player == current_player
+      "You drew a #{card_received_deck} from the deck."
     else
-      "#{current_player.name} ran out of cards. #{current_player.name} drew a card from the deck."
+      "#{current_player.name} drew a card from the deck."
     end
+  end
+
+  def book_message(player)
+    "#{player_to_s(player)} made a book with four #{rank_received}s!"
   end
 
   def out_of_game_message(player)
