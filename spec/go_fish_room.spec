@@ -129,7 +129,6 @@ describe GoFishRoom do
         end
       end
 
-      # TODO: If player is out of cards and there there are no cards left in the stock, they are out of the game.
       context 'when player has no cards and deck is empty' do
         before do
           room.users[0].player.cards = []
@@ -336,6 +335,33 @@ describe GoFishRoom do
             expect(client3_result).to match(/#{player1_name}.*#{valid_rank}.*#{player2_name}/i)
           end
         end
+      end
+    end
+  end
+
+  describe '#run_started_game' do
+    it 'shows all players their hand' do
+      room.play_round
+      expect(client1.capture_output).to match(/of/i)
+      expect(client2.capture_output).to match(/of/i)
+    end
+
+    it 'shows all players their hand only once' do
+      room.play_round
+      clear_clients_output
+      room.play_round
+
+      expect(client1.capture_output).to_not match(/of/i)
+      expect(client2.capture_output).to_not match(/of/i)
+    end
+
+    context 'on first player turn' do
+      it 'shows all clients whose turn it is' do
+        room.play_round
+
+        expect(client1.capture_output).to match(/your turn/)
+        expect(client2.capture_output).to match(/#{player1_name}'s turn/)
+        expect(client3.capture_output).to match(/#{player1_name}'s turn/)
       end
     end
   end

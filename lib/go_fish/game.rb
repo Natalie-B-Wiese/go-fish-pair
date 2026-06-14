@@ -5,6 +5,7 @@ require_relative 'turn_result'
 class Game
   SMALL_GAME_CARDS = 7
   BIG_GAME_CARDS = 5
+  BOOKS_TO_WIN = (Card::SUITS * Card::RANKS) / Book::SIZE
 
   attr_reader :players, :deck, :inputs
 
@@ -17,7 +18,7 @@ class Game
   end
 
   def game_over?
-    book_count == (Card::SUITS * Card::RANKS) / Book::SIZE
+    book_count == BOOKS_TO_WIN
   end
 
   def current_player
