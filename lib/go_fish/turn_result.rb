@@ -1,4 +1,10 @@
 class TurnResult
+  NO_CARDS = 'ran out of cards'
+  EMPTY_DECK = 'the deck is empty'
+  GO_AGAIN = 'can go again'
+  BOOK = 'made a book with four'
+  DISQUALIFIED = 'out of the game'
+
   attr_reader :current_player, :opponent_player, :rank_requested, :cards_received_opponent
 
   attr_accessor :was_book_made, :card_received_deck
@@ -20,7 +26,7 @@ class TurnResult
       string = request_message(player) + give_message(player)
       string += draw_deck_message(player) if cards_received_opponent.nil?
       string += book_message(player) if book_made?
-      string += "#{player_to_s(player)} can go again." if go_again?
+      string += "#{player_to_s(player)} #{GO_AGAIN}." if go_again?
       string
     end
   end
@@ -45,7 +51,7 @@ class TurnResult
     if card_received_deck.nil?
       out_of_game_message(player)
     else
-      "#{player_to_s(player)} ran out of cards. #{draw_deck_message(player)}."
+      "#{player_to_s(player)} #{NO_CARDS}. #{draw_deck_message(player)}."
     end
   end
 
@@ -65,7 +71,7 @@ class TurnResult
 
   def draw_deck_message(player)
     if card_received_deck.nil?
-      "#{current_player.name} tried to fish, but the deck was empty."
+      "#{current_player.name} tried to fish, but #{EMPTY_DECK}."
     elsif player == current_player
       "You drew a #{card_received_deck} from the deck."
     else
@@ -74,12 +80,12 @@ class TurnResult
   end
 
   def book_message(player)
-    "#{player_to_s(player)} made a book with four #{rank_received}s!"
+    "#{player_to_s(player)} #{BOOK} #{rank_received}s!"
   end
 
   def out_of_game_message(player)
-    "#{player_to_s(player)} ran out of cards and the deck is empty. " +
-      "#{player_to_s(player)} #{is_are(current_player, player)} out of the game"
+    "#{player_to_s(player)} #{NO_CARDS} and #{EMPTY_DECK}. " +
+      "#{player_to_s(player)} #{is_are(current_player, player)} #{DISQUALIFIED}."
   end
 
   def book_made?

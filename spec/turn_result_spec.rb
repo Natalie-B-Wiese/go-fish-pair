@@ -17,20 +17,21 @@ describe TurnResult do
 
     let(:card_received) { Card.new('5', 'Spades') }
 
-    context 'when book_made? true and went_fish? true' do
-      let(:turn_result) do
-        TurnResult.new(current_player: current_player, opponent_player: opponent_player,
-                       card_received_deck: card_received, was_book_made: true)
+    # current_player:, opponent_player: nil, rank_requested: nil,
+    #             cards_received_opponent: [], card_received_deck: nil, was_book_made: false
+    context 'when opponent_player is nil, rank_requested is nil, cards_received is nil' do
+      let(:turn_result) { TurnResult.new(current_player: current_player) }
+      it 'returns player out of game message' do
+        result = turn_result.message(current_player)
+        expect(result).to match(/#{TurnResult::DISQUALIFIED}/i)
       end
 
-      it 'contains a book message' do
-        result = turn_result.message(other_player)
-        expect(result).to match(/book/i)
-      end
+      it 'uses correct subject' do
+        result_player = turn_result.message(current_player)
+        expect(result_player).to match(/you/i)
 
-      it 'shows book rank' do
-        result = turn_result.message(other_player)
-        expect(result).to match(/#{card_received.rank}/)
+        result_opponent = turn_result.message(current_player)
+        expect(result_opponent).to match(/#{current_player_name}/i)
       end
     end
   end
