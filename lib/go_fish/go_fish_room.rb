@@ -8,6 +8,7 @@ class GoFishRoom < Room
   def initialize(host_user, capacity: host_user.client.desired_player_count, id: '0000')
     super
     @winner = nil
+    @has_shown_round = false
     reset
   end
 
@@ -24,7 +25,7 @@ class GoFishRoom < Room
   end
 
   def play_round
-    print_round_start if has_shown_round == true
+    print_round_start unless shown_round? == true
 
     if game.current_player.out_of_cards?
       result = game.request_deck_card
@@ -42,6 +43,7 @@ class GoFishRoom < Room
 
     result = game.play_turn(rank: inputs[:rank].value, opponent: inputs[:opponent].value.player)
     puts_turn_result_to_all_clients(result)
+    reset
   end
 
   def new_game
@@ -49,6 +51,10 @@ class GoFishRoom < Room
   end
 
   private
+
+  def shown_round?
+    !!has_shown_round
+  end
 
   def switch_turn
     game.switch_turn
