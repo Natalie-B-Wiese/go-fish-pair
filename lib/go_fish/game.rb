@@ -1,11 +1,12 @@
 require_relative '../deck'
 require_relative '../input'
 require_relative 'turn_result'
+require_relative 'book'
 
 class Game
   SMALL_GAME_CARDS = 7
   BIG_GAME_CARDS = 5
-  BOOKS_TO_WIN = (Card::SUITS * Card::RANKS) / Book::SIZE
+  BOOKS_TO_WIN = (Card::SUITS.length * Card::RANKS.length) / Book::SIZE
 
   attr_reader :players, :deck, :inputs
 

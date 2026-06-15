@@ -524,33 +524,33 @@ describe Game do
     end
   end
 
-  xdescribe '#winning_player' do
-    let(:player1) { User.new(Client.new('socket'), Player.new('Jeff')) }
-    let(:player2) { User.new(Client.new('socket'), Player.new('Bob')) }
-    let(:user3) { User.new(Client.new('socket'), Player.new('Billy')) }
-    let(:players) { [player1, player2, user3] }
+  describe '#winning_player' do
+    let(:player1) {  Player.new('Jeff') }
+    let(:player2) {  Player.new('Bob') }
+    let(:user3) { Player.new('Billy') }
+    let(:players) { [player1, player2, player3] }
 
     let(:game) { described_class.new(players) }
 
     context 'when one player has most books' do
       before do
-        player1.player.books = []
-        player2.player.books = [Book.new(5), Book.new(2), Book.new(10)]
-        user3.player.books = [Book.new(12)]
+        player1.books = []
+        player2.books = [Book.new(5), Book.new(2), Book.new(10)]
+        player3.books = [Book.new(12)]
       end
 
       it 'returns that player' do
         result = game.winning_player
 
-        expect(result).to eq player2.player
+        expect(result).to eq player2
       end
     end
 
     context 'when there is a tie' do
       before do
-        player1.player.books = [Book.new(8), Book.new(5), Book.new(2)]
-        player2.player.books = [Book.new(5), Book.new(3), Book.new(4)]
-        user3.player.books = [Book.new(15)]
+        player1.books = [Book.new(8), Book.new(5), Book.new(2)]
+        player2.books = [Book.new(5), Book.new(3), Book.new(4)]
+        player3.books = [Book.new(15)]
       end
 
       it 'returns user with most book and highest value book' do
