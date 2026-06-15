@@ -3,7 +3,7 @@ require_relative 'game'
 require_relative '../input'
 
 class GoFishRoom < Room
-  attr_accessor :round_progress, :inputs, :winner
+  attr_accessor :has_shown_round, :inputs, :winner
 
   def initialize(host_user, capacity: host_user.client.desired_player_count, id: '0000')
     super
@@ -24,7 +24,7 @@ class GoFishRoom < Room
   end
 
   def play_round
-    print_round_start if round_progress == 0
+    print_round_start if has_shown_round == true
 
     if game.current_player.out_of_cards?
       result = game.request_deck_card
@@ -62,7 +62,7 @@ class GoFishRoom < Room
   end
 
   def reset
-    @round_progress = 0
+    @has_shown_round = false
     @inputs = {
       rank: Input.new,
       opponent: Input.new
@@ -84,7 +84,7 @@ class GoFishRoom < Room
   def print_round_start
     show_cards
     show_whose_turn
-    self.round_progress += 1
+    self.has_shown_round = true
   end
 
   def print_winner
