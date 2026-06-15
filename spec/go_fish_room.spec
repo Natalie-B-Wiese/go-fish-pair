@@ -339,23 +339,30 @@ describe GoFishRoom do
     end
   end
 
-  it 'plays a round until all books have been won' do
-    client1
-      .end
-
-    it 'shows all players the winner' do
-      room.play_round
-      expect(client1.capture_output).to match(/of/i)
-      expect(client2.capture_output).to match(/of/i)
+  describe '#run_started_game' do
+    before do
+      room.users[0].player.cards = [Card.new('A', 'Spades'), Card.new('A', 'Diamonds'), Card.new('A', 'Hearts')]
+      room.users[1].player.cards = [Card.new('5', 'Diamonds'), Card.new('2', 'Spades')]
+      room.users[2].player.cards = [Card.new('3', 'Hearts'), Card.new('5', 'Hearts')]
+      room.game.deck.cards = [Card.new('5', 'Spades')]
     end
 
-    it 'shows all players the winner only once' do
+    it 'shows all clients whose turn it is' do
+      room.play_round
+
+      expect(client1.capture_output).to match(/your turn/)
+      expect(client2.capture_output).to match(/#{player1_name}'s turn/)
+      expect(client3.capture_output).to match(/#{player1_name}'s turn/)
+    end
+
+    it 'shows all clients whose turn it is only once' do
       room.play_round
       clear_clients_output
       room.play_round
 
-      expect(client1.capture_output).to_not match(/of/i)
-      expect(client2.capture_output).to_not match(/of/i)
+      expect(client1.capture_output).to_not match(/your turn/)
+      expect(client2.capture_output).to_not match(/#{player1_name}'s turn/)
+      expect(client3.capture_output).to_not match(/#{player1_name}'s turn/)
     end
   end
 end
