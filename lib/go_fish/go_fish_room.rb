@@ -27,11 +27,7 @@ class GoFishRoom < Room
   def play_round
     print_round_start unless shown_round? == true
 
-    if game.current_player.out_of_cards?
-      result = game.request_deck_card
-      puts_turn_result_to_all_clients(result)
-      switch_turn if result.card_received_deck.nil?
-    end
+    handle_player_out_of_cards if game.current_player.out_of_cards?
 
     # get ranks
     collect_rank unless inputs[:rank].value
@@ -162,5 +158,11 @@ class GoFishRoom < Room
     else
       inputs[:opponent].value = opponent
     end
+  end
+
+  def handle_player_out_of_cards
+    result = game.request_deck_card
+    puts_turn_result_to_all_clients(result)
+    switch_turn if result.card_received_deck.nil?
   end
 end
